@@ -1,0 +1,1 @@
+spotinst_sdk2>=2.1.15; python_version >= "3.6"
