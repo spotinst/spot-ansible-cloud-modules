@@ -1,0 +1,25 @@
+ancestor: null
+releases:
+  1.0.0:
+    changes:
+      release_summary: New collection - adding all existing modules.
+    fragments:
+    - 1-0-0-summary.yml
+    - 3641626-adjust-tests.yml
+    modules:
+    - description: Manage (Create, Update, Delete) Spot AWS Elastigroups
+      name: aws_elastigroup
+      namespace: ''
+    - description: Create, update or delete Spot AWS Managed Instances
+      name: aws_managed_instance
+      namespace: ''
+    - description: Create, update or delete Spot MRScaler
+      name: aws_mrscaler
+      namespace: ''
+    - description: Create, update or delete Spot Ocean K8s
+      name: aws_ocean_k8s
+      namespace: ''
+    - description: Create event subscription for resource
+      name: event_subscription
+      namespace: ''
+    release_date: '2021-12-14'
