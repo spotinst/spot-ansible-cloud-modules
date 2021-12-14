@@ -4,11 +4,10 @@ on:
   # Run CI against all pushes (direct commits, also merged PRs), Pull Requests
   push:
   pull_request:
-  # Run CI once per day (at 12:00 UTC)
+  # Run CI once per day (at 12:12 UTC)
   # This ensures that even if there haven't been commits that we are still testing against latest version of ansible-test for each ansible-base version
-#  TODO shibel: restore after approval
-#  schedule:
-#    - cron: '0 12 * * 0' # run every sunday at 12:00
+  schedule:
+    - cron: '12 12 * * *'
 env:
   NAMESPACE: spot
   COLLECTION_NAME: cloud_modules
