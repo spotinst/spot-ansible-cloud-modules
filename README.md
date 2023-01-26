@@ -6,6 +6,7 @@ The Spot Cloud Modules Ansible collection includes Ansible modules to help autom
 
 <!--start requires_ansible-->
 ## Ansible version compatibility
+
 This collection has been tested against following Ansible versions: **>=2.9.10**.
 <!--end requires_ansible-->
 
@@ -24,11 +25,11 @@ Version `1.0.0` of this collection requires at least version `2.1.15` of Spot's 
 
 Name | Description
 --- | ---
-[spot.cloud_modules.aws_elastigroup](docs/examples/elastigroup/README.md)|Manage Spot Elastigroups
-[spot.cloud_modules.aws_managed_instance](docs/examples/managed_instance/README.md)|Manage Spot Managed Instances
-[spot.cloud_modules.aws_ocean_k8s](docs/examples/ocean/README.md)|Manage Spot Ocean Kubernetes Clusters
-[spot.cloud_modules.aws_mrscaler](docs/examples/emr/README.md)|Manage Spot MR Scalers
-[spot.cloud_modules.event_subscription](docs/examples/events/README.md)|Manage Spot Event Subscriptions
+[spot.cloud_modules.aws_elastigroup](https://github.com/spotinst/spot-ansible-cloud-modules/blob/main/docs/examples/elastigroup/README.md)|Manage Spot Elastigroups
+[spot.cloud_modules.aws_managed_instance](https://github.com/spotinst/spot-ansible-cloud-modules/blob/main/docs/examples/managed_instance/README.md)|Manage Spot Managed Instances
+[spot.cloud_modules.aws_ocean_k8s](https://github.com/spotinst/spot-ansible-cloud-modules/blob/main/docs/examples/ocean/README.md)|Manage Spot Ocean Kubernetes Clusters
+[spot.cloud_modules.aws_mrscaler](https://github.com/spotinst/spot-ansible-cloud-modules/blob/main/docs/examples/emr/README.md)|Manage Spot MR Scalers
+[spot.cloud_modules.event_subscription](https://github.com/spotinst/spot-ansible-cloud-modules/blob/main/docs/examples/events/README.md)|Manage Spot Event Subscriptions
 <!--end collection content-->
 
 ## Installing this collection
@@ -78,7 +79,7 @@ You can either call modules by their Fully Qualified Collection Namespace (`FQCN
 
 ## Migrating from Spot's previous modules
 
-*This section does **not** apply to you if you are upgrading from a previous version of **this** collection.* 
+*This section does **not** apply to you if you are upgrading from a previous version of **this** collection.*
 
 If you are migrating either from `community.general` or from previously having our `spotinst_aws_elastigroup` installed manually, please take note of the following breaking changes:
 
@@ -92,7 +93,7 @@ If you are migrating either from `community.general` or from previously having o
 
 - Python `>=3.6` required.
 - `spotinst_sdk2` (v2) required (your version may have required `spotinst_sdk` (v1)).
-- All references to modules should be changed to `spot.cloud_modules.module_name`, according to the module names in [the modules section](#modules). 
+- All references to modules should be changed to `spot.cloud_modules.module_name`, according to the module names in [the modules section](#modules).
   - Note: all modules have been renamed.
 
 ## Contributing
