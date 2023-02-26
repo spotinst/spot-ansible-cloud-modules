@@ -288,7 +288,7 @@ options:
                         type: str
                         description:
                             - "Defines the type of the operating system. Valid Values: `Linux`, `Windows`"
-                    zone:
+                    zones:
                         type: list
                         elements: str
                         description:
