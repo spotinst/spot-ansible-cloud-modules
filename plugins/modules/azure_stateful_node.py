@@ -79,45 +79,73 @@ options:
         description:
             - Perform the desired action on the azure stateful node. This has no effect on delete operations.
 
-    managed_instance_config:
+    stateful_node_config:
         type: dict
-        description: various configurations related to the managed instance
+        description: various configurations related to the stateful node
         suboptions:
             deletion_config:
                 type: dict
-                description: configurations related to the deletion of the managed instance
+                description: configurations related to the deletion of the stateful node
                 suboptions:
                 deallocation_config:
                     type: dict
                     suboptions:
-                        deallocate_network_interfaces:
-                          type: bool
-                          description:
-                            - Whether to deallocate the MI's network interfaces upon deletion
-                        deallocate_volumes:
-                          type: bool
-                          description:
-                            - Whether to deallocate the MI's volumes upon deletion
-                        deallocate_snapshots:
-                          type: bool
-                          description:
-                            - Whether to deallocate the MI's snapshots upon deletion
-                        deallocate_amis:
-                          type: bool
-                          description:
-                            - Whether to deallocate the AMIs upon deletion
-                        should_terminate_instance:
-                          type: bool
-                          description:
-                            - Choose whether to detach the MI without terminating it on AWS side.
-
-                ami_backup:
-                    type: dict
-                    suboptions:
-                        should_delete_images:
-                            type: bool
+                        disk_deallocation_config:
+                            type: dict
                             description:
-                                - Mark if images collected during AMI Auto Backup should be deleted during instance deletion.
+                                - Disk Deallocation Configuration.
+                            suboptions:
+                                should_deallocate:
+                                    type: bool
+                                    description:
+                                        - Indicates whether to delete the stateful node's disk resources.
+                                ttl_in_hours:
+                                    type: int
+                                    description:
+                                        - Hours to keep the resource alive before deletion. Default: 96
+                        network_deallocation_config:
+                            type: dict
+                            description:
+                                - Network Deallocation Configuration.
+                            suboptions:
+                                should_deallocate:
+                                    type: bool
+                                    description:
+                                        - Indicates whether to delete the stateful node's network resources.
+                                ttl_in_hours:
+                                    type: int
+                                    description:
+                                        - Hours to keep the resource alive before deletion. Default: 96
+                        public_ip_deallocation_config:
+                            type: dict
+                            description:
+                                - Public IP Deallocation Configuration.
+                            suboptions:
+                                should_deallocate:
+                                    type: bool
+                                    description:
+                                        - Indicates whether to delete the stateful node's public ip resources.
+                                ttl_in_hours:
+                                    type: int
+                                    description:
+                                        - Hours to keep the resource alive before deletion. Default: 96
+                        snapshot_deallocation_config:
+                            type: dict
+                            description:
+                                - Snapshot Deallocation Configuration.
+                            suboptions:
+                                should_deallocate:
+                                    type: bool
+                                    description:
+                                        - Indicates whether to delete the stateful node's snapshot resources.
+                                ttl_in_hours:
+                                    type: int
+                                    description:
+                                        - Hours to keep the resource alive before deletion. Default: 96
+                        should_terminate_vm:
+                          type: bool
+                          description:
+                            - Indicates whether to delete the stateful node's VM.
 
     stateful_node:
         type: dict
@@ -264,79 +292,374 @@ options:
                         type: list
                         elements: str
                         description:
-                            - A list of subnet identifiers for your instance.
+                            - "List of Azure Availability Zones in the defined region. Valid Values: `1`, `2`, `3`"
                     preferred_zone:
                         type: list
                         elements: str
                         description:
-                            - A list of subnet identifiers for your instance.
-                    vpc_id:
-                        type: str
-                        description:
-                            - VPC ID for the managed instance.
-                    elastic_ip:
-                        type: str
-                        description:
-                            - Elastic IP Allocation ID to associate to the instance
-                    private_ip:
-                        type: str
-                        description:
-                            - Private IP Allocation ID to associate to the instance
-                    product:
-                        type: str
-                        description:
-                            - Operation system type.
-                            - "Possible values: `Linux/UNIX`, `SUSE Linux`, `Windows`, `Red Hat Enterprise Linux`"
-                            - In case of EC2 classic: Linux/UNIX (Amazon VPC), SUSE Linux (Amazon VPC), Windows (Amazon VPC), Red Hat Enterprise Linux (Amazon VPC)
-                    launch_specification:
+                            - "The AZ to prioritize when launching VMs. Valid Values: `1`, `2`, `3`"
+                    vm_sizes:
                         type: dict
-                        description:
-                            - launch specification object
+                        description: Defines the VM sizes to use when launching VMs.
                         suboptions:
-                            instance_types:
-                                type: dict
-                                suboptions:
-                                    preferred_type:
-                                        type: str
-                                        description:
-                                            - The preferred instance type
-                                    types:
-                                        type: list
-                                        elements: str
-                                        description:
-                                            - Comma separated list of available instance types for instance
-                            ebs_optimized:
-                                type: bool
-                                description:
-                                    - Enable EBS optimization for supported instance which is not enabled by default. Note - additional charges will be applied. Default: false
-                            monitoring:
-                                type: bool
-                                description:
-                                    - Describes whether instance Enhanced Monitoring is enabled. Default: false
-                            tenancy:
-                                type: str
-                                description:
-                                    - 'Valid values: "default", "dedicated" Default: default'
-                            iam_role:
-                                type: dict
-                                suboptions:
-                                    name:
-                                        type: str
-                                    arn:
-                                        type: str
-                            security_group_ids:
+                            od_sizes:
                                 type: list
                                 elements: str
                                 description:
-                                    - The security-group IDs for the managed instance
-                            image_id:
+                                    - Defines the on-demand sizes to use when launching VMs.
+                            spot_sizes:
+                                type: list
+                                elements: str
+                                description:
+                                    - Defines the spot-VM sizes to use when launching VMs.
+                            preferred_spot_sizes:
+                                type: list
+                                elements: str
+                                description:
+                                    - Prioritize Spot VM sizes when launching Spot VMs.
+                    launch_specification:
+                        type: dict
+                        description:
+                            - Defines the launch specification of the VM.
+                        suboptions:
+                            boot_diagnostics:
+                                type: dict
+                                suboptions:
+                                    is_enabled:
+                                        type: bool
+                                        description:
+                                            - Allows you to enable and disable the configuration of boot diagnostics at launch
+                                    storage_uri:
+                                        type: str
+                                        description:
+                                            - The storage URI that is used if a type is unmanaged.
+                                    type:
+                                        type: str
+                                        description:
+                                            - "Defines the storage type on VM launch in Azure. Valid Values: `managed`, `unmanaged`"
+                            custom_data:
+                                type: string
+                                description:
+                                    - Defines the custom data (YAML encoded at Base64) that will be executed upon VM launch.
+                            data_disks:
+                                type: list
+                                description:
+                                    - The definitions of data disks that will be created and attached to the stateful node's VM.
+                                elements: dict
+                                suboptions:
+                                    lun:
+                                        type: str
+                                        description:
+                                            - The LUN of the data disk.
+                                    size_g_b:
+                                        type: int
+                                        description:
+                                            - The size of the data disk in GB, required if dataDisks is specified.
+                                    type:
+                                        type: str
+                                        description:
+                                            - "Type of data disk. Valid Values: `Standard_LRS`, `Premium_LRS`, `StandardSSD_LRS`, `UltraSSD_LRS`"
+                            extensions:
+                                type: list
+                                description:
+                                    - A list of objects for Azure extensions.
+                                elements: dict
+                                suboptions:
+                                    api_version:
+                                        type: str
+                                        description:
+                                            - The API version of the extension. Required if extension specified.
+                                    minor_version_auto_upgrade:
+                                        type: bool
+                                    name:
+                                        type: str
+                                    publisher:
+                                        type: str
+                                    type:
+                                        type: str
+                            image:
+                                type: dict
+                                description:
+                                    - Defines the image with which the VM will be launched.
+                                suboptions:
+                                    custom:
+                                        type: dict
+                                        description:
+                                            - Custom image definitions.
+                                        suboptions:
+                                            name:
+                                                type: str
+                                                description:
+                                                    - The name of the custom image.
+                                            resource_group_name:
+                                                type: str
+                                                description:
+                                                    - The resource group name for custom image.
+                                    gallery:
+                                        type: dict
+                                        description:
+                                            - Gallery image definitions.
+                                        suboptions:
+                                            gallery_name:
+                                                type: str
+                                                description:
+                                                    - Name of the gallery.
+                                            image_name:
+                                                type: str
+                                                description:
+                                                    - Name of the gallery image.
+                                            resource_group_name:
+                                                type: str
+                                                description:
+                                                    - The resource group name for gallery image.
+                                            spot_account_id:
+                                                type: str
+                                                description:
+                                                    - The Spot account ID that connected to the Azure subscription to which the gallery belongs.
+                                            version_name:
+                                                type: str
+                                                description:
+                                                    - Image's version. Can be in the format x.x.x or 'latest'.
+                                    marketplace:
+                                        type: dict
+                                        description:
+                                            - Select an image from Azure's Marketplace image catalogue.
+                                        suboptions:
+                                            offer:
+                                                type: str
+                                                description:
+                                                    - Image offer.
+                                            publisher:
+                                                type: str
+                                                description:
+                                                    - Image publisher.
+                                            sku:
+                                                type: str
+                                                description:
+                                                    - Image Stock Keeping Unit, which is the specific version of the image.
+                                            version:
+                                                type: str
+                                                description:
+                                                    - "Image Version. Default: `latest`"
+                            licence_type:
                                 type: str
                                 description:
-                                    - The AMI for the managed instance
-                            key_pair:
+                                    - Specify an existing Azure license type to use when launching new VMs.
+                                    - Valid values for Windows OS: `Windows_Server`, `Windows_Client`
+                                    - Valid values for Linux OS: `RHEL_BYOS`, `SLES_BYOS`
+                            load_balancers_config:
+                                type: dict
+                                description:
+                                    - Configure a Load Balancer.
+                                suboptions:
+                                    load_balancers:
+                                        type: list
+                                        elements: dict
+                                        description:
+                                            - Add a load balancer. For Azure Gateway, each Backend Pool is a separate load balancer.
+                                        suboptions:
+                                            backend_pool_names:
+                                                type: list
+                                                elements: str
+                                                description:
+                                                    - Name of the Backend Pool to register the Stateful Node VMs to.
+                                            load_balancer_sku:
+                                                type: str
+                                                description:
+                                                    - "if type is LoadBalancer then Valid Values are: `Standard`, `Basic`"
+                                                    - "if ApplicationGateway then Valid Values are: `Standard_Large`, `Standard_Medium`, `Standard_Small`, `Standard_v2`, `WAF_v2`, `WAF_Large`, `WAF_Medium`"
+                                           name:
+                                                type: str
+                                                description:
+                                                    - Name of the Application Gateway/Load Balancer
+                                           resource_group_name:
+                                                type: str
+                                                description:
+                                                    - The Resource Group name of the Load Balancer.
+                                           type:
+                                                type: str
+                                                description:
+                                                    - "The type of load balancer. Valid Values: `loadBalancer`, `applicationGateway`"
+                            login:
+                                type: dict
+                                description:
+                                    - Specify the authentication details to be used for launching VMs.
+                                suboptions:
+                                    password:
+                                        type: str
+                                        description:
+                                            - Defines the password for admin access to Windows VMs.
+                                    ssh_public_key:
+                                        type: str
+                                        description:
+                                            - Defines the SSH public key for admin access to Linux VMs.
+                                    user_name:
+                                        type: str
+                                        description:
+                                            - Defines the admin user name for launching VMs.
+                            managed_service_identities:
+                                type: list
+                                elements: dict
+                                description:
+                                    - Defines a user-assigned managed identity to the launched VMs.
+                                suboptions:
+                                    resource_group_name:
+                                        type: str
+                                        description:
+                                            - Defines the resource group of the managed service identities.
+                                    name:
+                                        type: str
+                                        description:
+                                            - Defines the name of the managed service identities.
+                            network:
+                                type: dict
+                                description:
+                                    - Defines the network profile with which the VM will be launched.
+                                suboptions:
+                                    resource_group_name:
+                                        type: str
+                                        description:
+                                            - Defines the resource group name of the virtual network with which the VM will be launched.
+                                    virtual_network_name:
+                                        type: str
+                                        description:
+                                            - Defines the name of the virtual network with which the VM will be launched.
+                                    network_interfaces:
+                                        type: list
+                                        elements: dict
+                                        description:
+                                            - Defines the network interfaces with which the VM will be launched.
+                                        suboptions:
+                                            additional_ip_configurations:
+                                                type: list
+                                                elements: dict
+                                                description:
+                                                    - Defines a list of extra IPs to be dynamically allocated.
+                                                suboptions:
+                                                    private_ip_address_version:
+                                                        type: str
+                                                        description:
+                                                            - "Defines the version of the private IP address. Valid Values: `IPv4`, `IPv6`"
+                                                    name:
+                                                        type: str
+                                                        description:
+                                                            - The name of the additional Ip Configuration.
+                                            application_security_groups:
+                                                type: list
+                                                elements: dict
+                                                description:
+                                                    - Defines the Application Security Groups that will be associated to the primary IP configration of the network interface.
+                                                suboptions:
+                                                    resource_group_name:
+                                                        type: str
+                                                        description:
+                                                            - Specify the resource group of the Application Security Group.
+                                                    name:
+                                                        type: str
+                                                        description:
+                                                            - Specify the name of the Application Security Group.
+                                            assign_public_ip:
+                                                type: bool
+                                                description:
+                                                    - Defines if a Public IP should be assigned in this network interface.
+                                            enable_ip_forwarding:
+                                                type: bool
+                                                description:
+                                                    - Enables IP forwarding on the network interface.
+                                            is_primary:
+                                                type: bool
+                                                description:
+                                                    - Defines whether the network interface is primary or not.
+                                            network_security_group:
+                                                type: dict
+                                                description:
+                                                    - Defines the network security group to which the network interface will be assigned.
+                                                suboptions:
+                                                    resource_group_name:
+                                                        type: str
+                                                        description:
+                                                            - Specify the resource group of the network security group.
+                                                    name:
+                                                        type: str
+                                                        description:
+                                                            - Specify the name of the network security group to use in this network interface.
+                                            private_ip_addresses:
+                                                type: list
+                                                elements: str
+                                                description:
+                                                    - Specify the private IP pool in which the VMs will be launched.
+                                            public_ips:                                            
+                                                type: list
+                                                elements: dict
+                                                description:
+                                                    - Specify the public IP pool in which the VMs will be launched.
+                                                suboptions:
+                                                    resource_group_name:
+                                                        type: str
+                                                        description:
+                                                            - Specify the resource group of the public IP.
+                                                    name:
+                                                        type: str
+                                                        description:
+                                                            - Specify the name of the public IP to which the VMs will be assigned.
+                                            public_ip_sku:
+                                                type: str
+                                                description:
+                                                    - "Defines the type of public IP to assign the VM. Valid Values: `Standard`, `Basic`"
+                                            subnet_name:
+                                                type: str
+                                                description:
+                                                    - Defines the subnet to which the network interface will be connected.
+                            os_disk:
+                                type: dict
+                                description:
+                                    - Specify OS disk specification other than default.
+                                suboptions:
+                                    size_g_b:
+                                        type: int
+                                        description:
+                                            - The size of the OS disk in GB.
+                                    type:
+                                        type: str
+                                        description:
+                                            - "Type of OS disk. Valid Values: `Standard_LRS`, `Premium_LRS`, `StandardSSD_LRS`"
+                            secrets:
+                                type: list
+                                elements: dict
+                                description:
+                                    - Set of certificates that should be installed on the VM
+                                suboptions:
+                                    source_vault:
+                                        type: dict
+                                        description:
+                                            - The key vault reference, contains the required certificates
+                                        suboptions:
+                                            name:
+                                                type: str
+                                                description:
+                                                    - The name of the key vault
+                                            resource_group_name:
+                                                type: str
+                                                description:
+                                                    - The resource group name of the key vault
+                                    vault_certificates:
+                                        type: list
+                                        elements: dict
+                                        description:
+                                            - The required certificate references
+                                        suboptions:
+                                            certificate_store:
+                                                type: str
+                                                description:
+                                                    - The certificate store directory the VM.
+                                            certificate_url:
+                                                type: str
+                                                description:
+                                                    - The URL of the certificate under the key vault
+                            shutdown_script:
                                 type: str
                                 description:
-                                    - The SSH key-pair for access to the managed instance
+                                    - Defines the shutdown script (encoded at Base64) to execute once the VM is detached.
                             tags:
                                 type: list
                                 elements: dict
@@ -345,140 +668,14 @@ options:
                                         type: str
                                     tag_value:
                                         type: str
-                            resource_tag_specification:
-                                type: dict
-                                description:
-                                    - Which resources should be tagged with group tags.
-                                suboptions:
-                                    volumes:
-                                        type: dict
-                                        suboptions:
-                                            should_tag:
-                                                type: bool
-                                    snapshots:
-                                        type: dict
-                                        suboptions:
-                                            should_tag:
-                                                type: bool
-                                    enis:
-                                        type: dict
-                                        suboptions:
-                                            should_tag:
-                                                type: bool
-                                    amis:
-                                        type: dict
-                                        suboptions:
-                                            should_tag:
-                                                type: bool
-                            user_data:
+                            vm_name:
                                 type: str
-                            shutdown_script:
+                                description:
+                                    - Set a VM name that will be persisted throughout the entire node lifecycle.
+                            vm_name_prefix:
                                 type: str
-                            credit_specification:
-                                type: dict
                                 description:
-                                    - a creditSpecification object
-                                suboptions:
-                                    cpu_credits:
-                                        type: str
-                            network_interfaces:
-                                description:
-                                    - List of network interfaces in an EC2 instance.
-                                type: list
-                                elements: dict
-                                suboptions:
-                                    device_index:
-                                        type: int
-                                    associate_ipv6_address:
-                                        type: bool
-                                        description:
-                                            - Indicates whether to assign an IPv6 address.
-                                            - Amazon EC2 chooses the IPv6 addresses from the subnet's range.
-                                    associate_public_ip_address:
-                                        type: bool
-                                        description:
-                                            - Indicates whether to assign a public IPv4 address to an instance you launch in a VPC.
-                                            - "The public IP address can only be assigned to a network interface for `eth0`"
-                                            - Can only be assigned to a new network interface, not an existing one.
-                                            - You cannot specify more than one network interface in the request.
-                                            - If launching into a default subnet, the default value is true.
-                            block_device_mappings:
-                                description: block device mappings for managed instance.
-                                type: list
-                                elements: dict
-                                suboptions:
-                                    device_name:
-                                        type: str
-                                    no_device:
-                                        type: str
-                                    virtual_name:
-                                        type: str
-                                    ebs:
-                                        type: dict
-                                        suboptions:
-                                            delete_on_termination:
-                                                type: bool
-                                            encrypted:
-                                                type: bool
-                                            iops:
-                                                type: int
-                                            throughput:
-                                                type: float
-                                            volume_size:
-                                                type: int
-                                            volume_type:
-                                                type: str
-                                            kms_key_id:
-                                                type: str
-                                            snapshot_id:
-                                                type: str
-            integrations:
-                type: dict
-                suboptions:
-                    route53:
-                        type: dict
-                        suboptions:
-                            domains:
-                                type: list
-                                elements: dict
-                                suboptions:
-                                    hosted_zone_id:
-                                        type: str
-                                    spotinst_account_id:
-                                        type: str
-                                    record_set_type:
-                                        type: str
-                                    record_sets:
-                                        type: list
-                                        elements: dict
-                                        suboptions:
-                                            name:
-                                                type: str
-                                            use_public_ip:
-                                                type: bool
-                                            use_public_dns:
-                                                type: bool
-                    load_balancers_config:
-                        type: dict
-                        suboptions:
-                            load_balancers:
-                                type: list
-                                elements: dict
-                                suboptions:
-                                    name:
-                                        type: str
-                                    arn:
-                                        type: str
-                                    type:
-                                        type: str
-                                    balancer_id:
-                                        type: str
-                                    target_set_id:
-                                        type: str
-                                    az_awareness:
-                                        type: bool
-                                    auto_weight:
-                                        type: bool
+                                    - Set a VM name prefix to be used for all launched VMs and the VM resources.
 """
 
 EXAMPLES = """
@@ -545,11 +742,11 @@ EXAMPLES = """
 
 RETURN = """
 ---
-managed_instance_id: 
-    description: The ID of the managed instance that was just created/update/deleted.
+stateful_node_id: 
+    description: The ID of the stateful node that was just created/update/deleted.
     returned: success
     type: str
-    sample: smi-a20bbc74
+    sample: ssn-792f7f87
 """
 
 HAS_SPOTINST_SDK = False
@@ -580,19 +777,17 @@ except ImportError as e:
 
 
 CLS_NAME_BY_ATTR_NAME = {
-    "managed_instance.integrations.load_balancers_config": "LoadBalancersConfiguration",
-    "managed_instance.integrations.route53": "Route53Configuration",
-    "managed_instance.integrations": "IntegrationsConfig"
+    "stateful_node.compute.launch_specification.load_balancers_config": "LoadBalancerConfig"
 }
 
 LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
-    "managed_instance.integrations.route53.domains.record_sets": "Route53RecordSetConfiguration",
-    "managed_instance.integrations.route53.domains": "Route53DomainConfiguration",
-    "managed_instance.scheduling.tasks": "Task",
-    "managed_instance.integrations.load_balancers_config.load_balancers": "LoadBalancer"
+    "stateful_node.scheduling.tasks": "SchedulingTask",
+    "stateful_node.compute.launch_specification.load_balancers_config.load_balancers": "LoadBalancer",
+    "stateful_node_config.deletion_config.deallocation_config.disk_deallocation_config": "Deallocate",
+    "stateful_node_config.deletion_config.deallocation_config.network_deallocation_config": "Deallocate",
+    "stateful_node_config.deletion_config.deallocation_config.public_ip_deallocation_config": "Deallocate",
+    "stateful_node_config.deletion_config.deallocation_config.snapshot_deallocation_config": "Deallocate"
 }
-
-
 
 
 def to_snake_case(camel_str):
@@ -683,25 +878,25 @@ def turn_to_model(content, field_name: str, curr_path=None):
         return instance
 
 
-def find_mis_with_same_name(managed_instances, name):
+def find_ssn_with_same_name(stateful_nodes, name):
     ret_val = []
-    for mi in managed_instances:
-        if mi["config"]["name"] == name:
-            ret_val.append(mi)
+    for node in stateful_nodes:
+        if node["config"]["name"] == name:
+            ret_val.append(node)
 
     return ret_val
 
 
 def clean_do_not_update_fields(
-        managed_instance_module_copy: dict, do_not_update_list: list
+        stateful_node_module_copy: dict, do_not_update_list: list
 ):
-    ret_val = managed_instance_module_copy
+    ret_val = stateful_node_module_copy
 
     # avoid deleting parent dicts before children
     do_not_update_list = sorted(do_not_update_list, key=len, reverse=True)
 
     for dotted_path in do_not_update_list:
-        curr_dict = managed_instance_module_copy
+        curr_dict = stateful_node_module_copy
         path_as_list = dotted_path.split(".")
         last_part_of_path = path_as_list[-1]
 
@@ -719,7 +914,7 @@ def get_id_and_operation(client, state: str, module):
     operation, id = None, None
     uniqueness_by = module.custom_params.get("uniqueness_by")
     manually_provided_mi_id = module.custom_params.get("id")
-    managed_instance = module.custom_params.get("managed_instance")
+    stateful_node = module.custom_params.get("stateful_node")
 
     if state == "present":
 
@@ -732,7 +927,7 @@ def get_id_and_operation(client, state: str, module):
         else:
             all_managed_instances = client.get_managed_instances()
             name = managed_instance["name"]
-            instances_with_name = find_mis_with_same_name(all_managed_instances, name)
+            instances_with_name = find_ssn_with_same_name(all_managed_instances, name)
 
             if len(instances_with_name) == 0:
                 operation = "create"
