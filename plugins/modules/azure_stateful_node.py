@@ -840,7 +840,7 @@ def get_client(module):
     else:
         session = spotinst.SpotinstSession(auth_token=token)
 
-    client = session.client("managed_instance_aws")
+    client = session.client("stateful_node_azure")
 
     return client
 
@@ -868,7 +868,7 @@ def turn_to_model(content, field_name: str, curr_path=None):
         override = find_in_overrides(curr_path)
         key_to_use = override if override else to_pascal_case(field_name)
 
-        class_ = getattr(spotinst.models.managed_instance.aws, key_to_use)
+        class_ = getattr(spotinst.models.stateful_node, key_to_use)
         instance = class_()
 
         for key, value in content.items():
@@ -913,52 +913,52 @@ def clean_do_not_update_fields(
 def get_id_and_operation(client, state: str, module):
     operation, id = None, None
     uniqueness_by = module.custom_params.get("uniqueness_by")
-    manually_provided_mi_id = module.custom_params.get("id")
+    manually_provided_ssn_id = module.custom_params.get("id")
     stateful_node = module.custom_params.get("stateful_node")
 
     if state == "present":
 
         if uniqueness_by == "id":
-            if manually_provided_mi_id is None:
+            if manually_provided_ssn_id is None:
                 operation = "create"
             else:
-                id = manually_provided_mi_id
+                id = manually_provided_ssn_id
                 operation = "update"
         else:
-            all_managed_instances = client.get_managed_instances()
-            name = managed_instance["name"]
-            instances_with_name = find_ssn_with_same_name(all_managed_instances, name)
+            all_stateful_nodes = client.get_all_stateful_nodes()
+            name = stateful_node["name"]
+            nodes_with_name = find_ssn_with_same_name(all_stateful_nodes, name)
 
-            if len(instances_with_name) == 0:
+            if len(nodes_with_name) == 0:
                 operation = "create"
-            elif len(instances_with_name) == 1:
-                id = instances_with_name[0]["id"]
+            elif len(nodes_with_name) == 1:
+                id = nodes_with_name[0]["id"]
                 operation = "update"
             else:
-                msg = f"Failed updating managed instance - 'uniqueness_by' is set to 'name' but there's more than one managed instance with the name '{name}'"
+                msg = f"Failed updating stateful node - 'uniqueness_by' is set to 'name' but there's more than one stateful node with the name '{name}'"
                 module.fail_json(changed=False, msg=msg)
 
     elif state == "absent":
         operation = "delete"
 
         if uniqueness_by == "id":
-            if manually_provided_mi_id is not None:
+            if manually_provided_ssn_id is not None:
                 id = module.custom_params.get("id")
             else:
-                msg = "Failed deleting managed instance - 'uniqueness_by' is set to `id` but parameter 'id' was not provided"
+                msg = "Failed deleting stateful node - 'uniqueness_by' is set to `id` but parameter 'id' was not provided"
                 module.fail_json(changed=False, msg=msg)
         else:
-            all_managed_instances = client.get_managed_instances()
-            name = managed_instance["name"]
-            instances_with_name = find_mis_with_same_name(all_managed_instances, name)
+            all_stateful_nodes = client.get_all_stateful_nodes()
+            name = stateful_node["name"]
+            nodes_with_name = find_ssn_with_same_name(all_stateful_nodes, name)
 
-            if len(instances_with_name) == 1:
-                id = instances_with_name[0]["id"]
-            if len(instances_with_name) > 1:
-                msg = f"Failed deleting managed instance - 'uniqueness_by' is set to 'name' but there's more than one managed instance with the name '{name}'"
+            if len(nodes_with_name) == 1:
+                id = nodes_with_name[0]["id"]
+            if len(nodes_with_name) > 1:
+                msg = f"Failed deleting stateful node - 'uniqueness_by' is set to 'name' but there's more than one stateful node with the name '{name}'"
                 module.fail_json(changed=False, msg=msg)
-            if len(instances_with_name) == 0:
-                msg = f"Failed deleting managed instance - 'uniqueness_by' is set to 'name' but there is no managed instance with the name '{name}'"
+            if len(nodes_with_name) == 0:
+                msg = f"Failed deleting stateful node - 'uniqueness_by' is set to 'name' but there is no stateful node with the name '{name}'"
                 module.fail_json(changed=False, msg=msg)
 
     else:
@@ -967,121 +967,116 @@ def get_id_and_operation(client, state: str, module):
     return operation, id
 
 
-def handle_managed_instance(client, module):
-    mi_models = spotinst.models.managed_instance.aws
-    managed_instance_module_copy = copy.deepcopy(module.custom_params.get("managed_instance"))
+def handle_stateful_node(client, module):
+    ssn_models = spotinst.models.stateful_node
+    stateful_node_module_copy = copy.deepcopy(module.custom_params.get("stateful_node"))
     state = module.custom_params.get("state")
 
-    operation, mi_id = get_id_and_operation(client, state, module)
+    operation, ssn_id = get_id_and_operation(client, state, module)
 
     if operation == "create":
-        has_changed, managed_instance_id, message = handle_create_managed_instance(client, managed_instance_module_copy)
+        has_changed, stateful_node_id, message = handle_create_stateful_node(client, stateful_node_module_copy)
     elif operation == "update":
-        has_changed, managed_instance_id, message = handle_update_managed_instance(client, managed_instance_module_copy,
-                                                                                   mi_id, module)
+        has_changed, stateful_node_id, message = handle_update_stateful_node(client, stateful_node_module_copy,
+                                                                                   ssn_id, module)
     elif operation == "delete":
-        has_changed, managed_instance_id, message = handle_delete_managed_instance(client, mi_id, mi_models, module)
+        has_changed, stateful_node_id, message = handle_delete_stateful_node(client, ssn_id, ssn_models, module)
     else:
         module.fail_json(changed=False, msg=f"Unknown operation {operation} - "
                                             f"this is probably a bug in the module's code: please report")
         return None, None, None  # for IDE - fail_json stops execution
 
-    return managed_instance_id, message, has_changed
+    return stateful_node_id, message, has_changed
 
 
-def handle_delete_managed_instance(client, mi_id, mi_models, module):
-    managed_instance_id = mi_id
-    delete_args = dict(managed_instance_id=managed_instance_id)
+def handle_delete_stateful_node(client, ssn_id, ssn_models, module):
+    stateful_node_id = ssn_id
+    delete_args = dict(node_id=stateful_node_id)
 
-    handle_deletion_config(delete_args, mi_models, module)
+    handle_deletion_config(delete_args, ssn_models, module)
 
     try:
-        client.delete_managed_instance(**delete_args)
-        message = f"Managed instance {mi_id} deleted successfully"
+        client.delete_stateful_node(**delete_args)
+        message = f"Stateful node {stateful_node_id} deleted successfully"
         has_changed = True
     except SpotinstClientException as exc:
-        if "MANAGED_INSTANCE_DOES_NOT_EXIST" in exc.message:
-            message = f"Failed deleting managed instance - managed instance with ID {mi_id} doesn't exist"
+        if "STATEFUL_NODE_DOES_NOT_EXIST" in exc.message:
+            message = f"Failed deleting stateful node - Stateful Node with ID {stateful_node_id} doesn't exist"
             module.fail_json(changed=False, msg=message)
         else:
-            message = f"Failed deleting managed instance (ID: {mi_id}), error: {exc.message}"
+            message = f"Failed deleting stateful node (ID: {stateful_node_id}), error: {exc.message}"
             module.fail_json(msg=message)
         has_changed = False
 
-    return has_changed, managed_instance_id, message
+    return has_changed, stateful_node_id, message
 
 
-def handle_update_managed_instance(client, managed_instance_module_copy, mi_id, module):
-    managed_instance_module_copy = clean_do_not_update_fields(
-        managed_instance_module_copy,
+def handle_update_stateful_node(client, stateful_node_module_copy, ssn_id, module):
+    stateful_node_module_copy = clean_do_not_update_fields(
+        stateful_node_module_copy,
         module.custom_params.get("do_not_update")
     )
-    ami_sdk_object = turn_to_model(managed_instance_module_copy, "managed_instance")
+    ami_sdk_object = turn_to_model(stateful_node_module_copy, "stateful_node")
 
     try:
-        res: dict = client.update_managed_instance(mi_id, managed_instance_update=ami_sdk_object)
-        managed_instance_id = res["id"]
-        message = "Managed instance updated successfully"
+        res: dict = client.update_stateful_node(node_id = ssn_id, node_update=ami_sdk_object)
+        stateful_node_id = res["id"]
+        message = "Stateful node updated successfully"
         has_changed = True
 
         action_type = module.custom_params.get("action", None)
         should_perform_action = action_type is not None
 
         if should_perform_action:
-            message = attempt_mi_action(
-                action_type, client, managed_instance_id, message
+            message = attempt_stateful_action(
+                action_type, client, stateful_node_id, message
             )
 
     except SpotinstClientException as exc:
-        if "MANAGED_INSTANCE_DOES_NOT_EXIST" in exc.message:
-            message = f"Failed updating managed instance - managed instance  with ID {mi_id} doesn't exist"
+        if "STATEFUL_NODE_DOES_NOT_EXIST" in exc.message:
+            message = f"Failed updating stateful node - stateful node with ID {stateful_node_id} doesn't exist"
             module.fail_json(changed=False, msg=message)
         else:
-            message = f"Failed updating managed instance (ID {mi_id}), error: {exc.message}"
+            message = f"Failed updating stateful node (ID {stateful_node_id}), error: {exc.message}"
             module.fail_json(msg=message)
         has_changed = False
 
-    return has_changed, mi_id, message
+    return has_changed, stateful_node_id, message
 
 
-def handle_create_managed_instance(client, managed_instance_module_copy):
+def handle_create_stateful_node(client, stateful_node_module_copy):
     ami_sdk_object = turn_to_model(
-        managed_instance_module_copy, "managed_instance"
+        stateful_node_module_copy, "stateful_node"
     )
-    res: dict = client.create_managed_instance(managed_instance=ami_sdk_object)
-    managed_instance_id = res["id"]
-    message = "Managed instance created successfully"
+    res: dict = client.create_stateful_node(node=ami_sdk_object)
+    stateful_node_id = res["id"]
+    message = "Stateful node created successfully"
     has_changed = True
-    return has_changed, managed_instance_id, message
+    return has_changed, stateful_node_id, message
 
 
-def handle_deletion_config(delete_args, mi_models, module):
-    mi_config = module.custom_params.get("managed_instance_config")
+def handle_deletion_config(delete_args, ssn_models, module):
+    ssn_config = module.custom_params.get("stateful_node_config")
 
-    if mi_config is not None:
-        deletion_config = mi_config.get("deletion_config")
+    if ssn_config is not None:
+        deletion_config = ssn_config.get("deletion_config")
 
         if deletion_config is not None:
             deallocation_config = deletion_config.get("deallocation_config")
-            ami_backup = deletion_config.get("ami_backup")
 
             if deallocation_config is not None:
-                dealloc_sdk_object = turn_to_model(deallocation_config, mi_models.DeallocationConfig())
+                dealloc_sdk_object = turn_to_model(deallocation_config, ssn_models.DeallocationConfig())
                 delete_args["deallocation_config"] = dealloc_sdk_object
 
-            if ami_backup is not None:
-                ami_sdk_object = turn_to_model(ami_backup, mi_models.AmiBackup())
-                delete_args["ami_backup"] = ami_sdk_object
 
-
-def attempt_mi_action(action_type, client, managed_instance_id, message):
+def attempt_stateful_action(action_type, client, stateful_node_id, message):
     try:
         if action_type == "pause":
-            client.pause_managed_instance(managed_instance_id)
+            client.update_stateful_node_state(node_id = stateful_node_id, state = "pause")
         if action_type == "resume":
-            client.resume_managed_instance(managed_instance_id)
+            client.update_stateful_node_state(node_id = stateful_node_id, state = "resume")
         if action_type == "recycle":
-            client.recycle_managed_instance(managed_instance_id)
+            client.update_stateful_node_state(node_id = stateful_node_id, state = "recycle")
 
         message = message + f" and action '{action_type}' started"
     except SpotinstClientException as exc:
@@ -1092,186 +1087,237 @@ def attempt_mi_action(action_type, client, managed_instance_id, message):
 
 
 def main():
+    persistence_fields = dict(
+        data_disks_persistence_mode=dict(type="str"),
+        os_disk_persistence_mode=dict(type="str"),
+        should_persist_data_disks=dict(type="bool"),
+        should_persist_network=dict(type="bool"),
+        should_persist_os_disk=dict(type="bool"),
+    )
+
+    health_fields = dict(
+        health_check_types=dict(type="list", elements="str"),
+        auto_healing=dict(type="bool"),
+        grace_period=dict(type="int"),
+        unhealthy_duration=dict(type="int"),
+    )
+
     task_fields = dict(
-        task_type=dict(type="str"),
-        start_time=dict(type="str"),
+        type=dict(type="str"),
         cron_expression=dict(type="str"),
         is_enabled=dict(type="bool"),
-        frequency=dict(type="str"),
     )
 
     scheduling_fields = dict(
         tasks=dict(type="list", elements="dict", options=task_fields)
     )
 
-    health_check_fields = dict(
-        type=dict(type="str"),
-        auto_healing=dict(type="bool"),
-        grace_period=dict(type="int"),
-        unhealthy_duration=dict(type="int"),
-    )
-
-    persistence_fields = dict(
-        persist_root_device=dict(type="bool"),
-        persist_block_devices=dict(type="bool"),
-        persist_private_ip=dict(type="bool"),
-        block_devices_mode=dict(type="str"),
-    )
-
     revert_to_spot_fields = dict(perform_at=dict(type="str"))
 
+    signal_fields = dict(
+        type=dict(type="str"),
+        timeout=dict(type="int"),
+    )
+
     strategy_fields = dict(
-        life_cycle=dict(type="str"),
-        orientation=dict(type="str"),
         draining_timeout=dict(type="int"),
         fallback_to_od=dict(type="bool"),
-        utilize_reserved_instances=dict(type="bool"),
-        utilize_commitments=dict(type="bool"),
+        od_windows=dict(type="list", elements="str"),
         optimization_windows=dict(type="list", elements="str"),
-        minimum_instance_lifetime=dict(type="int"),
+        preferred_lifecycle=dict(type="str"),
         revert_to_spot=dict(type="dict", options=revert_to_spot_fields),
+        signals=dict(type="list", elements="dict", options=signal_fields),
+
     )
 
-    instance_types_fields = dict(
-        preferred_type=dict(type="str"), types=dict(type="list", elements="str")
+    boot_diagnostics_fields = dict(
+        is_enabled=dict(type="bool"),
+        storage_uri=dict(type="str"),
+        type=dict(type="str"),
     )
 
-    iam_role_fields = dict(name=dict(type="str"), arn=dict(type="str"))
-
-    tags_fields = dict(tag_key=dict(type="str"), tag_value=dict(type="str"))
-
-    tag_spec_fields = dict(should_tag=dict(type="bool"))
-
-    resource_ts_fields = dict(
-        volumes=dict(type="dict", options=tag_spec_fields),
-        snapshots=dict(type="dict", options=tag_spec_fields),
-        enis=dict(type="dict", options=tag_spec_fields),
-        amis=dict(type="dict", options=tag_spec_fields),
+    data_disk_fields = dict(
+        lun=dict(type="int"),
+        size_g_b=dict(type="int"),
+        type=dict(type="str"),
     )
 
-    credit_specification_fields = dict(cpu_credits=dict(type="str"))
-
-    network_interfaces_fields = dict(
-        device_index=dict(type="int"),
-        associate_ipv6_address=dict(type="bool"),
-        associate_public_ip_address=dict(type="bool"),
-    )
-
-    ebs_fields = dict(
-        delete_on_termination=dict(type="bool"),
-        encrypted=dict(type="bool"),
-        iops=dict(type="int"),
-        throughput=dict(type="float"),
-        volume_size=dict(type="int"),
-        volume_type=dict(type="str"),
-        kms_key_id=dict(type="str"),
-        snapshot_id=dict(type="str"),
-    )
-
-    block_device_mappings_fields = dict(
-        device_name=dict(type="str"),
-        no_device=dict(type="str"),
-        virtual_name=dict(type="str"),
-        ebs=dict(type="dict", options=ebs_fields),
-    )
-
-    launch_spec_fields = dict(
-        instance_types=dict(type="dict", options=instance_types_fields),
-        ebs_optimized=dict(type="bool"),
-        monitoring=dict(type="bool"),
-        tenancy=dict(type="str"),
-        iam_role=dict(type="dict", options=iam_role_fields),
-        security_group_ids=dict(type="list", elements="str"),
-        image_id=dict(type="str"),
-        key_pair=dict(type="str"),
-        tags=dict(type="list", elements="dict", options=tags_fields),
-        resource_tag_specification=dict(type="dict", options=resource_ts_fields),
-        user_data=dict(type="str"),
-        shutdown_script=dict(type="str"),
-        credit_specification=dict(type="dict", options=credit_specification_fields),
-        network_interfaces=dict(
-            type="list", elements="dict", options=network_interfaces_fields
-        ),
-        block_device_mappings=dict(
-            type="list", elements="dict", options=block_device_mappings_fields
-        ),
-    )
-
-    compute_fields = dict(
-        subnet_ids=dict(type="list", elements="str"),
-        vpc_id=dict(type="str"),
-        elastic_ip=dict(type="str"),
-        private_ip=dict(type="str"),
-        product=dict(type="str"),
-        launch_specification=dict(type="dict", options=launch_spec_fields),
-    )
-
-    route53_record_sets_fields = dict(
+    extension_fields = dict(
+        api_version=dict(type="str"),
+        minor_version_auto_upgrade=dict(type="bool"),
         name=dict(type="str"),
-        use_public_ip=dict(type="bool"),
-        use_public_dns=dict(type="bool"),
+        publisher=dict(type="str"),
+        type=dict(type="str"),
     )
 
-    route53_domains_fields = dict(
-        hosted_zone_id=dict(type="str"),
-        spotinst_account_id=dict(type="str"),
-        record_set_type=dict(type="str"),
-        record_sets=dict(
-            type="list", elements="dict", options=route53_record_sets_fields
-        ),
+    marketplace_image_fields = dict(
+        publisher=dict(type="str"),
+        offer=dict(type="str"),
+        sku=dict(type="str"),
+        version=dict(type="str"),
     )
 
-    route53_fields = dict(
-        domains=dict(type="list", elements="dict", options=route53_domains_fields)
+    custom_image_fields = dict(
+        gallery_name=dict(type="str"),
+        image_name=dict(type="str"),
+        resource_group_name=dict(type="str"),
+        spot_account_id=dict(type="str"),
+        version_name=dict(type="str"),
+    )
+
+    gallery_image_fields = dict(
+        resource_group_name=dict(type="str"),
+        name=dict(type="str"),
+    )
+
+    image_fields = dict(
+        marketplace=dict(type="dict", options=marketplace_image_fields),
+        custom=dict(type="dict", options=custom_image_fields),
+        gallery=dict(type="dict", options=gallery_image_fields),
     )
 
     load_balancers_fields = dict(
+        backend_pool_names=dict(type="list", elements="str"),
+        load_balancer_sku=dict(type="str"),
         name=dict(type="str"),
-        arn=dict(type="str"),
+        resource_group_name=dict(type="str"),
         type=dict(type="str"),
-        balancer_id=dict(type="str"),
-        target_set_id=dict(type="str"),
-        az_awareness=dict(type="bool"),
-        auto_weight=dict(type="bool"),
     )
 
     load_balancers_config_fields = dict(
         load_balancers=dict(type="list", elements="dict", options=load_balancers_fields)
     )
 
-    integrations_fields = dict(
-        route53=dict(type="dict", options=route53_fields),
+    login_fields = dict(
+        ssh_public_key=dict(type="str"),
+        user_name=dict(type="str"),
+        password=dict(type="str"),
+    )
+
+    managed_service_identity_fields = dict(
+        resource_group_name=dict(type="str"),
+        name=dict(type="str"),
+    )
+
+    additional_ip_configuration_fields = dict(
+        name=dict(type="str"),
+        private_ip_address_version=dict(type="str"),
+    )
+    
+    security_group_fields = dict(
+        name=dict(type="str"),
+        resource_group_name=dict(type="str"),
+    )
+
+    public_ip_fields = dict(
+        name=dict(type="str"),
+        resource_group_name=dict(type="str"),
+    )    
+    
+    network_interface_fields = dict(
+        additional_ip_configurations=dict(type="list", elements="dict", options=additional_ip_configuration_fields),
+        application_security_groups=dict(type="list", elements="dict", options=security_group_fields),
+        assign_public_ip=dict(type="bool"),
+        enable_ip_forwarding=dict(type="bool"),
+        is_primary=dict(type="bool"),
+        network_security_group=dict(type="dict", options=security_group_fields),
+        private_ip_addresses=dict(type="list", elements="str"),
+        public_ips=dict(type="list", elements="dict", options=public_ip_fields),
+        public_ip_sku=dict(type="str"),
+        subnet_name=dict(type="str"),
+    )
+
+    network_fields = dict(
+        network_interfaces=dict(type="list", elements="dict", options=network_interface_fields),        
+        virtual_network_name=dict(type="str"),
+        resource_group_name=dict(type="str"),
+    )
+
+    os_disk_fields = dict(
+        size_g_b=dict(type="str"),
+        type=dict(type="str"),
+    )
+
+    source_vault_fields = dict(
+        name=dict(type="str"),
+        resource_group_name=dict(type="str"),
+    )
+
+    vault_certificate_fields = dict(
+        certificate_store=dict(type="str"),
+        certificate_url=dict(type="str"),
+    )
+
+    secret_fields = dict(
+        source_vault=dict(type="dict", options=source_vault_fields),
+        certificate_url=dict(type="list", elements="dict", options=vault_certificate_fields),
+    )
+
+    tags_fields = dict(tag_key=dict(type="str"), tag_value=dict(type="str"))  
+ 
+    launch_spec_fields = dict(
+        boot_diagnostics=dict(type="dict", options=boot_diagnostics_fields),
+        custom_data=dict(type="str"),
+        data_disks=dict(type="list", elements="dict", options=data_disk_fields),
+        extensions=dict(type="list", elements="dict", options=extension_fields),
+        image=dict(type="dict", options=image_fields),
+        license_type=dict(type="str"),
         load_balancers_config=dict(type="dict", options=load_balancers_config_fields),
+        login=dict(type="dict", options=login_fields),
+        managed_service_identities=dict(type="list", elements="dict", options=managed_service_identity_fields),
+        network=dict(type="dict", options=network_fields),
+        os_disk=dict(type="dict", options=os_disk_fields),
+        secrets=dict(type="list", elements="dict", options=secret_fields),
+        shutdown_script=dict(type="str"),
+        tags=dict(type="list", elements="dict", options=tags_fields),
+        vm_name=dict(type="str"),
+        vm_name_prefix=dict(type="str"),
+    )
+
+    vm_sizes_fields = dict(
+        od_sizes=dict(type="list", elements="str"),
+        preferred_spot_sizes=dict(type="list", elements="str"),
+        spot_sizes=dict(type="list", elements="str"),                
+    )    
+
+    compute_fields = dict(
+        launch_specification=dict(type="dict", options=launch_spec_fields),
+        os=dict(type="str"),
+        preferred_zone=dict(type="str"), 
+        vm_sizes=dict(type="dict", options=vm_sizes_fields),       
+        zones=dict(type="list", elements="str"),
     )
 
     actual_fields = dict(
         name=dict(type="str", required=True),
         region=dict(type="str", required=True),
+        resource_group_name=dict(type="str", required=True),
         description=dict(type="str"),
         persistence=dict(type="dict", options=persistence_fields),
-        health_check=dict(type="dict", options=health_check_fields),
+        health=dict(type="dict", options=health_fields),
         scheduling=dict(type="dict", options=scheduling_fields),
         strategy=dict(type="dict", options=strategy_fields),
-        compute=dict(type="dict", options=compute_fields),
-        integrations=dict(type="dict", options=integrations_fields),
+        compute=dict(type="dict", options=compute_fields)
     )
 
+    deallocate_config = dict(
+        should_deallocate=dict(type="bool"),
+        ttl_in_hours=dict(type="int"),
+    )
+    
     deallocation_config_fields = dict(
-        deallocate_network_interfaces=dict(type="bool"),
-        deallocate_volumes=dict(type="bool"),
-        deallocate_snapshots=dict(type="bool"),
-        deallocate_amis=dict(type="bool"),
-        should_terminate_instance=dict(type="bool"),
+        disk_deallocation_config=dict(type="dict", options=deallocate_config),
+        network_deallocation_config=dict(type="dict", options=deallocate_config),
+        public_ip_deallocation_config=dict(type="dict", options=deallocate_config),
+        snapshot_deallocation_config=dict(type="dict", options=deallocate_config),                
+        should_terminate_vm=dict(type="bool"),
     )
-
-    ami_backup_fields = dict(should_delete_images=dict(type="bool"))
 
     deletion_config_fields = dict(
-        ami_backup=dict(type="dict", options=ami_backup_fields),
         deallocation_config=dict(type="dict", options=deallocation_config_fields)
     )
 
-    managed_instance_config_fields = dict(
+    stateful_node_config_fields = dict(
         deletion_config=dict(type="dict", options=deletion_config_fields)
     )
 
@@ -1289,12 +1335,14 @@ def main():
         uniqueness_by=dict(type="str", choices=["id", "name"], default="name"),
         do_not_update=dict(type="list", elements="str"),
         # endregion
-        # region mi-specific config fields
+
+        # region stateful node specific config fields
         action=dict(type="str", choices=["pause", "resume", "recycle"]),
-        managed_instance_config=dict(type="dict", options=managed_instance_config_fields),
+        stateful_node_config=dict(type="dict", options=stateful_node_config_fields),
         # endregion
-        # region managed_instance
-        managed_instance=dict(type="dict", required=True, options=actual_fields)
+
+        # region stateful_node
+        stateful_node=dict(type="dict", required=True, options=actual_fields)
         # endregion
     )
 
@@ -1319,12 +1367,12 @@ def main():
 
     client = get_client(module=module)
 
-    managed_instance_id, message, has_changed = handle_managed_instance(
+    stateful_node_id, message, has_changed = handle_stateful_node(
         client=client, module=module
     )
 
     module.exit_json(
-        changed=has_changed, managed_instance_id=managed_instance_id, message=message
+        changed=has_changed, stateful_node_id=stateful_node_id, message=message
     )
 
 
