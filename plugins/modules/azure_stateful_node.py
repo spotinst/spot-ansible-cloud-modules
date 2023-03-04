@@ -25,13 +25,12 @@ options:
     token:
         type: str
         description:
-            - Optional parameter that allows to set an token inside the module configuration. By default this is retrieved from the credentials path
+            - "Optional parameter that allows to set an token inside the module configuration. By default this is retrieved from the credentials path"
 
     credentials_path:
         type: str
         default: "/root/.spotinst/credentials"
-        description:
-          - Optional parameter that allows to set a non-default credentials path.
+        description: "Optional parameter that allows to set a non-default credentials path."
 
     state:
         type: str
@@ -39,18 +38,17 @@ options:
             - present
             - absent
         default: present
-        description:
-            - create update or delete
+        description: "create update or delete"
 
     account_id:
         type: str
         description:
-            - Optional parameter that allows to set an account-id inside the module configuration. By default this is retrieved from the credentials path
+            - "Optional parameter that allows to set an account-id inside the module configuration. By default this is retrieved from the credentials path"
 
     id:
         type: str
         description:
-            - The Stateful Node ID if it already exists and you want to update or delete it.
+            - "The Stateful Node ID if it already exists and you want to update or delete it."
             - "This will have no effect unless the `uniqueness_by` field is set to ID."
             - "When this is set, and the `uniqueness_by` field is set, the node will either be updated or deleted, but not created."
 
@@ -60,14 +58,15 @@ options:
             - id
             - name
         description:
-            - If your Stateful Node names are not unique, you may use this feature to update or delete a specific node.
+            - "If your Stateful Node names are not unique, you may use this feature to update or delete a specific node."
             - "Whenever this property is set, you must set a an `id` in order to update or delete a node, otherwise a node will be created."
 
 
     do_not_update:
         type: list
+        elements: str
         description:
-            - A list of dotted paths to attributes that you don't wish to update during an update operation.
+            - "A list of dotted paths to attributes that you don't wish to update during an update operation."
             - "Example: Specifying `compute.product` will make sure that this attribute is never updated."
 
     action:
@@ -81,469 +80,387 @@ options:
 
     stateful_node_config:
         type: dict
-        description: various configurations related to the stateful node
+        description: "Various configurations related to the stateful node"
         suboptions:
             deletion_config:
                 type: dict
-                description: configurations related to the deletion of the stateful node
+                description: "Configurations related to the deletion of the stateful node"
                 suboptions:
-                deallocation_config:
-                    type: dict
-                    suboptions:
-                        disk_deallocation_config:
-                            type: dict
-                            description:
-                                - Disk Deallocation Configuration.
-                            suboptions:
-                                should_deallocate:
-                                    type: bool
-                                    description:
-                                        - Indicates whether to delete the stateful node's disk resources.
-                                ttl_in_hours:
-                                    type: int
-                                    description:
-                                        - Hours to keep the resource alive before deletion. Default: 96
-                        network_deallocation_config:
-                            type: dict
-                            description:
-                                - Network Deallocation Configuration.
-                            suboptions:
-                                should_deallocate:
-                                    type: bool
-                                    description:
-                                        - Indicates whether to delete the stateful node's network resources.
-                                ttl_in_hours:
-                                    type: int
-                                    description:
-                                        - Hours to keep the resource alive before deletion. Default: 96
-                        public_ip_deallocation_config:
-                            type: dict
-                            description:
-                                - Public IP Deallocation Configuration.
-                            suboptions:
-                                should_deallocate:
-                                    type: bool
-                                    description:
-                                        - Indicates whether to delete the stateful node's public ip resources.
-                                ttl_in_hours:
-                                    type: int
-                                    description:
-                                        - Hours to keep the resource alive before deletion. Default: 96
-                        snapshot_deallocation_config:
-                            type: dict
-                            description:
-                                - Snapshot Deallocation Configuration.
-                            suboptions:
-                                should_deallocate:
-                                    type: bool
-                                    description:
-                                        - Indicates whether to delete the stateful node's snapshot resources.
-                                ttl_in_hours:
-                                    type: int
-                                    description:
-                                        - Hours to keep the resource alive before deletion. Default: 96
-                        should_terminate_vm:
-                          type: bool
-                          description:
-                            - Indicates whether to delete the stateful node's VM.
+                    deallocation_config:
+                        type: dict
+                        description: "Deletion configuration for each stateful node's resources"
+                        suboptions:
+                            disk_deallocation_config:
+                                type: dict
+                                description: "Disk Deallocation Configuration."
+                                suboptions:
+                                    should_deallocate:
+                                        type: bool
+                                        description: "Indicates whether to delete the stateful node's disk resources."
+                                    ttl_in_hours:
+                                        type: int
+                                        description: "Hours to keep the resource alive before deletion. Default: 96"
+                            network_deallocation_config:
+                                type: dict
+                                description: "Network Deallocation Configuration."
+                                suboptions:
+                                    should_deallocate:
+                                        type: bool
+                                        description: "Indicates whether to delete the stateful node's network resources."
+                                    ttl_in_hours:
+                                        type: int
+                                        description: "Hours to keep the resource alive before deletion. Default: 96"
+                            public_ip_deallocation_config:
+                                type: dict
+                                description: "Public IP Deallocation Configuration."
+                                suboptions:
+                                    should_deallocate:
+                                        type: bool
+                                        description: "Indicates whether to delete the stateful node's public ip resources."
+                                    ttl_in_hours:
+                                        type: int
+                                        description: "Hours to keep the resource alive before deletion. Default: 96"
+                            snapshot_deallocation_config:
+                                type: dict
+                                description:
+                                    - Snapshot Deallocation Configuration.
+                                suboptions:
+                                    should_deallocate:
+                                        type: bool
+                                        description: "Indicates whether to delete the stateful node's snapshot resources."
+                                    ttl_in_hours:
+                                        type: int
+                                        description: "Hours to keep the resource alive before deletion. Default: 96"
+                            should_terminate_vm:
+                                type: bool
+                                description: "Indicates whether to delete the stateful node's VM."
 
     stateful_node:
         type: dict
-        description: describe the desired properties of the stateful node under this object.
+        description: "Describe the desired properties of the stateful node under this object."
         suboptions:
             name:
                 type: str
-                description:
-                    - The stateful node's name.
+                description: "The stateful node's name."
             region:
                 type: str
-                description:
-                    - The Azure region in which the Stateful Node will be launched.
+                description: "The Azure region in which the Stateful Node will be launched."
             resource_group_name:
                 type: str
-                description:
-                    - The Azure resource group in which the VM and all of the subsequent subresources will be launched.
+                description: "The Azure resource group in which the VM and all of the subsequent subresources will be launched."
             description:
                 type: str
-                description:
-                    - optional description for the stateful node.
+                description: "optional description for the stateful node."
             persistence:
                 type: dict
+                description: Defines the persistence of the Stateful Node.
                 suboptions:
                     data_disks_persistence_mode:
                         type: str
-                        description:
-                            - "Defines the persistency handling for data disks. valid values: `reattach`, `onLaunch`"
+                        description: "Defines the persistency handling for data disks. valid values: `reattach`, `onLaunch`"
                     os_disk_persistence_mode:
                         type: str
-                        description:
-                            - "Defines the persistency handling for os disk. valid values: `reattach`, `onLaunch`"
+                        description: "Defines the persistency handling for os disk. valid values: `reattach`, `onLaunch`"
                     should_persist_data_disks:
                         type: bool
-                        description:
-                            - Enables the data disks persistency.
+                        description: "Enables the data disks persistency."
                     should_persist_network:
                         type: bool
-                        description:
-                            - Enables the network persistency.
+                        description: "Enables the network persistency."
                     should_persist_os_disk:
                         type: bool
-                        description:
-                            - Enables the OS disk persistency.
+                        description: "Enables the OS disk persistency."
             health:
                 type: dict
+                description: "Set health check and auto-healing of unhealthy VMs."
                 suboptions:
                     health_check_types:
                         type: list
                         elements: str
-                        description:
-                            - Health check types to use in order to validate VM health.
+                        description: "Health check types to use in order to validate VM health."
                     auto_healing:
                         type: bool
-                        description:
-                            - Auto healing replaces the instance automatically in case the health check fails
+                        description: "Auto healing replaces the instance automatically in case the health check fails"
                     grace_period:
                         type: int
-                        description:
-                            - The amount of time (in seconds) after a new VM has launched before terminating the old VM.
+                        description: "The amount of time (in seconds) after a new VM has launched before terminating the old VM."
                     unhealthy_duration:
                         type: int
-                        description:
-                            - Amount of time (in seconds) for the VM to remain unhealthy before a replacement is triggered.
+                        description: "Amount of time (in seconds) for the VM to remain unhealthy before a replacement is triggered."
             scheduling:
                 type: dict
-                description: Scheduling settings for stateful node
+                description: "Scheduling settings for stateful node"
                 suboptions:
                     tasks:
-                        description:
-                            - Scheduled tasks to excute for the stateful node
                         type: list
                         elements: dict
+                        description: "Scheduled tasks to excute for the stateful node"
                         suboptions:
                             type:
                                 type: str
-                                description:
-                                    - "The type of scheduled task. valid values: `pause`, `resume`, `recycle`"
+                                description: "The type of scheduled task. valid values: `pause`, `resume`, `recycle`"
                             cron_expression:
                                 type: str
-                                description:
-                                    - A valid cron expression that describes the scheduled task (UTC).
+                                description: "A valid cron expression that describes the scheduled task (UTC)."
                             is_enabled:
                                 type: bool
-                                description:
-                                    - Describes whether the task is enabled. When true the task should run when false it should not run.
-             strategy:
+                                description: "Describes whether the task is enabled. When true the task should run when false it should not run."
+            strategy:
                 type: dict
+                description: "The strategy to launch the underlying VM and Spot behavior for the Stateful Node."
                 suboptions:
                     draining_timeout:
                         type: int
-                        description:
-                            - The time in seconds to allow the node be drained from incoming TCP connections and detached from LB before terminating it. Default: 120.
+                        description: "The time in seconds to allow the node be drained from incoming TCP connections and detached from LB before terminating it. Default: 120."
                     fallback_to_od:
                         type: bool
-                        description:
-                            - In case of no spots available, stateful node will launch an On-demand instance instead
+                        description: "In case of no spots available, stateful node will launch an On-demand instance instead"
                     od_windows:
                         type: list
                         elements: str
-                        description:
-                            - Define the time windows in which the underlying VM will be set as an on-demand lifecycle type.
+                        description: "Define the time windows in which the underlying VM will be set as an on-demand lifecycle type."
                     optimization_windows:
                         type: list
                         elements: str
-                        description:
-                            - "When performAt is 'timeWindow': must specify a list of 'timeWindows' with at least one time window Each string is in the format of - `ddd:hh:mm-ddd:hh:mm ddd` = day of week = Sun | Mon | Tue | Wed | Thu | Fri | Sat hh = hour 24 = 0 -23 mm = minute = 0 - 59"
+                        description: "When performAt is `timeWindow`: must specify a list of `timeWindows` with at least one time window Each string is in the format of - `ddd:hh:mm-ddd:hh:mm ddd` = day of week = Sun | Mon | Tue | Wed | Thu | Fri | Sat hh = hour 24 = 0 -23 mm = minute = 0 - 59"
                     preferred_lifecycle:
                         type: str
-                        description:
-                            - "The preferred lifecycle to launch VM, valid values: `spot`, `od`. Default: `spot`".
+                        description: "The preferred lifecycle to launch VM, valid values: `spot`, `od`. Default: `spot`"
                     revert_to_spot:
                         type: dict
-                        description:
-                            - Hold settings for strategy correction - replacing On-Demand for Spot VMs.
+                        description: "Hold settings for strategy correction - replacing On-Demand for Spot VMs."
                         suboptions:
                             perform_at:
                                 type: str
-                                description:
-                                    - "Valid values: `always`, `never`, `timeWindow`. Default: `always`"
+                                description: "Valid values: `always`, `never`, `timeWindow`. Default: `always`"
                     signals:
-                        description:
-                            - Signals that VMs are expected to send to the platform.
                         type: list
                         elements: dict
+                        description: Signals that VMs are expected to send to the platform.
                         suboptions:
                             timeout:
                                 type: int
-                                description:
-                                    - The timeout in seconds to hold the vm until a signal is sent. Default: 1800
+                                description: "The timeout in seconds to hold the vm until a signal is sent. Default: 1800"
                             type:
                                 type: str
-                                description:
-                                    - "The defined type of signal. Valid values: `vmReady`, `vmReadyToShutdown`"
+                                description: "The defined type of signal. Valid values: `vmReady`, `vmReadyToShutdown`"
             compute:
                 type: dict
-                description: Defines the computational parameters to use when launch the VM for the Stateful Node.
+                description: "Defines the computational parameters to use when launch the VM for the Stateful Node."
                 suboptions:
                     os:
                         type: str
-                        description:
-                            - "Defines the type of the operating system. Valid Values: `Linux`, `Windows`"
+                        description: "Defines the type of the operating system. Valid Values: `Linux`, `Windows`"
                     zones:
                         type: list
                         elements: str
-                        description:
-                            - "List of Azure Availability Zones in the defined region. Valid Values: `1`, `2`, `3`"
+                        description: "List of Azure Availability Zones in the defined region. Valid Values: `1`, `2`, `3`"
                     preferred_zone:
                         type: list
                         elements: str
-                        description:
-                            - "The AZ to prioritize when launching VMs. Valid Values: `1`, `2`, `3`"
+                        description: "The AZ to prioritize when launching VMs. Valid Values: `1`, `2`, `3`"
                     vm_sizes:
                         type: dict
-                        description: Defines the VM sizes to use when launching VMs.
+                        description: "Defines the VM sizes to use when launching VMs."
                         suboptions:
                             od_sizes:
                                 type: list
                                 elements: str
-                                description:
-                                    - Defines the on-demand sizes to use when launching VMs.
+                                description: "Defines the on-demand sizes to use when launching VMs."
                             spot_sizes:
                                 type: list
                                 elements: str
-                                description:
-                                    - Defines the spot-VM sizes to use when launching VMs.
+                                description: "Defines the spot-VM sizes to use when launching VMs."
                             preferred_spot_sizes:
                                 type: list
                                 elements: str
-                                description:
-                                    - Prioritize Spot VM sizes when launching Spot VMs.
+                                description: "Prioritize Spot VM sizes when launching Spot VMs."
                     launch_specification:
                         type: dict
-                        description:
-                            - Defines the launch specification of the VM.
+                        description: "Defines the launch specification of the VM."
                         suboptions:
                             boot_diagnostics:
                                 type: dict
+                                description: "Will enable boot diagnostics in Azure when a new VM is launched"
                                 suboptions:
                                     is_enabled:
                                         type: bool
-                                        description:
-                                            - Allows you to enable and disable the configuration of boot diagnostics at launch
+                                        description: "Allows you to enable and disable the configuration of boot diagnostics at launch"
                                     storage_uri:
                                         type: str
-                                        description:
-                                            - The storage URI that is used if a type is unmanaged.
+                                        description: "The storage URI that is used if a type is unmanaged."
                                     type:
                                         type: str
-                                        description:
-                                            - "Defines the storage type on VM launch in Azure. Valid Values: `managed`, `unmanaged`"
+                                        description: "Defines the storage type on VM launch in Azure. Valid Values: `managed`, `unmanaged`"
                             custom_data:
                                 type: string
-                                description:
-                                    - Defines the custom data (YAML encoded at Base64) that will be executed upon VM launch.
+                                description: "Defines the custom data (YAML encoded at Base64) that will be executed upon VM launch."
                             data_disks:
                                 type: list
-                                description:
-                                    - The definitions of data disks that will be created and attached to the stateful node's VM.
                                 elements: dict
+                                description: "The definitions of data disks that will be created and attached to the stateful node's VM."
                                 suboptions:
                                     lun:
                                         type: str
-                                        description:
-                                            - The LUN of the data disk.
+                                        description: "The LUN of the data disk."
                                     size_g_b:
                                         type: int
-                                        description:
-                                            - The size of the data disk in GB, required if dataDisks is specified.
+                                        description: "The size of the data disk in GB, required if dataDisks is specified."
                                     type:
                                         type: str
-                                        description:
-                                            - "Type of data disk. Valid Values: `Standard_LRS`, `Premium_LRS`, `StandardSSD_LRS`, `UltraSSD_LRS`"
+                                        description: "Type of data disk. Valid Values: `Standard_LRS`, `Premium_LRS`, `StandardSSD_LRS`, `UltraSSD_LRS`"
                             extensions:
                                 type: list
-                                description:
-                                    - A list of objects for Azure extensions.
                                 elements: dict
+                                description: "A list of objects for Azure extensions."
                                 suboptions:
                                     api_version:
                                         type: str
-                                        description:
-                                            - The API version of the extension. Required if extension specified.
+                                        description: "The API version of the extension. Required if extension specified."
                                     minor_version_auto_upgrade:
                                         type: bool
+                                        description: "Required on compute.launchSpecification.extensions object"
                                     name:
                                         type: str
+                                        description: "Required on compute.launchSpecification.extensions object"
                                     publisher:
                                         type: str
+                                        description: "Required on compute.launchSpecification.extensions object"
                                     type:
                                         type: str
+                                        description: "Required on compute.launchSpecification.extensions object"
                             image:
                                 type: dict
-                                description:
-                                    - Defines the image with which the VM will be launched.
+                                description: "Defines the image with which the VM will be launched."
                                 suboptions:
                                     custom:
                                         type: dict
-                                        description:
-                                            - Custom image definitions.
+                                        description: "Custom image definitions."
                                         suboptions:
                                             name:
                                                 type: str
-                                                description:
-                                                    - The name of the custom image.
+                                                description: "The name of the custom image."
                                             resource_group_name:
                                                 type: str
-                                                description:
-                                                    - The resource group name for custom image.
+                                                description: "The resource group name for custom image."
                                     gallery:
                                         type: dict
-                                        description:
-                                            - Gallery image definitions.
+                                        description: "Gallery image definitions."
                                         suboptions:
                                             gallery_name:
                                                 type: str
-                                                description:
-                                                    - Name of the gallery.
+                                                description: "Name of the gallery."
                                             image_name:
                                                 type: str
-                                                description:
-                                                    - Name of the gallery image.
+                                                description: "Name of the gallery image."
                                             resource_group_name:
                                                 type: str
-                                                description:
-                                                    - The resource group name for gallery image.
+                                                description: "The resource group name for gallery image."
                                             spot_account_id:
                                                 type: str
-                                                description:
-                                                    - The Spot account ID that connected to the Azure subscription to which the gallery belongs.
+                                                description: "The Spot account ID that connected to the Azure subscription to which the gallery belongs."
                                             version_name:
                                                 type: str
-                                                description:
-                                                    - Image's version. Can be in the format x.x.x or 'latest'.
+                                                description: "Image's version. Can be in the format x.x.x or 'latest'."
                                     marketplace:
                                         type: dict
-                                        description:
-                                            - Select an image from Azure's Marketplace image catalogue.
+                                        description: "Select an image from Azure's Marketplace image catalogue."
                                         suboptions:
                                             offer:
                                                 type: str
-                                                description:
-                                                    - Image offer.
+                                                description: "Image offer."
                                             publisher:
                                                 type: str
-                                                description:
-                                                    - Image publisher.
+                                                description: "Image publisher."
                                             sku:
                                                 type: str
-                                                description:
-                                                    - Image Stock Keeping Unit, which is the specific version of the image.
+                                                description: "Image Stock Keeping Unit, which is the specific version of the image."
                                             version:
                                                 type: str
-                                                description:
-                                                    - "Image Version. Default: `latest`"
+                                                description: "Image Version. Default: `latest`"
                             licence_type:
                                 type: str
                                 description:
-                                    - Specify an existing Azure license type to use when launching new VMs.
-                                    - Valid values for Windows OS: `Windows_Server`, `Windows_Client`
-                                    - Valid values for Linux OS: `RHEL_BYOS`, `SLES_BYOS`
+                                    - "Specify an existing Azure license type to use when launching new VMs."
+                                    - "Valid values for Windows OS: `Windows_Server`, `Windows_Client`"
+                                    - "Valid values for Linux OS: `RHEL_BYOS`, `SLES_BYOS`"
                             load_balancers_config:
                                 type: dict
-                                description:
-                                    - Configure a Load Balancer.
+                                description: "Configure a Load Balancer."
                                 suboptions:
                                     load_balancers:
                                         type: list
                                         elements: dict
-                                        description:
-                                            - Add a load balancer. For Azure Gateway, each Backend Pool is a separate load balancer.
+                                        description: "Add a load balancer. For Azure Gateway, each Backend Pool is a separate load balancer."
                                         suboptions:
                                             backend_pool_names:
                                                 type: list
                                                 elements: str
-                                                description:
-                                                    - Name of the Backend Pool to register the Stateful Node VMs to.
+                                                description: "Name of the Backend Pool to register the Stateful Node VMs to."
                                             load_balancer_sku:
                                                 type: str
                                                 description:
                                                     - "if type is LoadBalancer then Valid Values are: `Standard`, `Basic`"
                                                     - "if ApplicationGateway then Valid Values are: `Standard_Large`, `Standard_Medium`, `Standard_Small`, `Standard_v2`, `WAF_v2`, `WAF_Large`, `WAF_Medium`"
-                                           name:
+                                            name:
                                                 type: str
-                                                description:
-                                                    - Name of the Application Gateway/Load Balancer
-                                           resource_group_name:
+                                                description: "Name of the Application Gateway/Load Balancer"
+                                            resource_group_name:
                                                 type: str
-                                                description:
-                                                    - The Resource Group name of the Load Balancer.
-                                           type:
+                                                description: "The Resource Group name of the Load Balancer."
+                                            type:
                                                 type: str
-                                                description:
-                                                    - "The type of load balancer. Valid Values: `loadBalancer`, `applicationGateway`"
+                                                description: "The type of load balancer. Valid Values: `loadBalancer`, `applicationGateway`"
                             login:
                                 type: dict
-                                description:
-                                    - Specify the authentication details to be used for launching VMs.
+                                description: "Specify the authentication details to be used for launching VMs."
                                 suboptions:
                                     password:
                                         type: str
-                                        description:
-                                            - Defines the password for admin access to Windows VMs.
+                                        description: "Defines the password for admin access to Windows VMs."
                                     ssh_public_key:
                                         type: str
-                                        description:
-                                            - Defines the SSH public key for admin access to Linux VMs.
+                                        description: "Defines the SSH public key for admin access to Linux VMs."
                                     user_name:
                                         type: str
-                                        description:
-                                            - Defines the admin user name for launching VMs.
+                                        description: "Defines the admin user name for launching VMs."
                             managed_service_identities:
                                 type: list
                                 elements: dict
-                                description:
-                                    - Defines a user-assigned managed identity to the launched VMs.
+                                description: "Defines a user-assigned managed identity to the launched VMs."
                                 suboptions:
                                     resource_group_name:
                                         type: str
-                                        description:
-                                            - Defines the resource group of the managed service identities.
+                                        description: "Defines the resource group of the managed service identities."
                                     name:
                                         type: str
-                                        description:
-                                            - Defines the name of the managed service identities.
+                                        description: "Defines the name of the managed service identities."
                             network:
                                 type: dict
-                                description:
-                                    - Defines the network profile with which the VM will be launched.
+                                description: "Defines the network profile with which the VM will be launched."
                                 suboptions:
                                     resource_group_name:
                                         type: str
-                                        description:
-                                            - Defines the resource group name of the virtual network with which the VM will be launched.
+                                        description: "Defines the resource group name of the virtual network with which the VM will be launched."
                                     virtual_network_name:
                                         type: str
-                                        description:
-                                            - Defines the name of the virtual network with which the VM will be launched.
+                                        description: "Defines the name of the virtual network with which the VM will be launched."
                                     network_interfaces:
                                         type: list
                                         elements: dict
-                                        description:
-                                            - Defines the network interfaces with which the VM will be launched.
+                                        description: "Defines the network interfaces with which the VM will be launched."
                                         suboptions:
                                             additional_ip_configurations:
                                                 type: list
                                                 elements: dict
-                                                description:
-                                                    - Defines a list of extra IPs to be dynamically allocated.
+                                                description: "Defines a list of extra IPs to be dynamically allocated."
                                                 suboptions:
                                                     private_ip_address_version:
                                                         type: str
-                                                        description:
-                                                            - "Defines the version of the private IP address. Valid Values: `IPv4`, `IPv6`"
+                                                        description: "Defines the version of the private IP address. Valid Values: `IPv4`, `IPv6`"
                                                     name:
                                                         type: str
-                                                        description:
-                                                            - The name of the additional Ip Configuration.
+                                                        description: "The name of the additional Ip Configuration."
                                             application_security_groups:
                                                 type: list
                                                 elements: dict
@@ -552,130 +469,106 @@ options:
                                                 suboptions:
                                                     resource_group_name:
                                                         type: str
-                                                        description:
-                                                            - Specify the resource group of the Application Security Group.
+                                                        description: "Specify the resource group of the Application Security Group."
                                                     name:
                                                         type: str
-                                                        description:
-                                                            - Specify the name of the Application Security Group.
+                                                        description: "Specify the name of the Application Security Group."
                                             assign_public_ip:
                                                 type: bool
-                                                description:
-                                                    - Defines if a Public IP should be assigned in this network interface.
+                                                description: "Defines if a Public IP should be assigned in this network interface."
                                             enable_ip_forwarding:
                                                 type: bool
-                                                description:
-                                                    - Enables IP forwarding on the network interface.
+                                                description: "Enables IP forwarding on the network interface."
                                             is_primary:
                                                 type: bool
-                                                description:
-                                                    - Defines whether the network interface is primary or not.
+                                                description: "Defines whether the network interface is primary or not."
                                             network_security_group:
                                                 type: dict
-                                                description:
-                                                    - Defines the network security group to which the network interface will be assigned.
+                                                description: "Defines the network security group to which the network interface will be assigned."
                                                 suboptions:
                                                     resource_group_name:
                                                         type: str
-                                                        description:
-                                                            - Specify the resource group of the network security group.
+                                                        description: "Specify the resource group of the network security group."
                                                     name:
                                                         type: str
-                                                        description:
-                                                            - Specify the name of the network security group to use in this network interface.
+                                                        description: "Specify the name of the network security group to use in this network interface."
                                             private_ip_addresses:
                                                 type: list
                                                 elements: str
-                                                description:
-                                                    - Specify the private IP pool in which the VMs will be launched.
+                                                description: "Specify the private IP pool in which the VMs will be launched."
                                             public_ips:                                            
                                                 type: list
                                                 elements: dict
-                                                description:
-                                                    - Specify the public IP pool in which the VMs will be launched.
+                                                description: "Specify the public IP pool in which the VMs will be launched."
                                                 suboptions:
                                                     resource_group_name:
                                                         type: str
-                                                        description:
-                                                            - Specify the resource group of the public IP.
+                                                        description: "Specify the resource group of the public IP."
                                                     name:
                                                         type: str
-                                                        description:
-                                                            - Specify the name of the public IP to which the VMs will be assigned.
+                                                        description: "Specify the name of the public IP to which the VMs will be assigned."
                                             public_ip_sku:
                                                 type: str
-                                                description:
-                                                    - "Defines the type of public IP to assign the VM. Valid Values: `Standard`, `Basic`"
+                                                description: "Defines the type of public IP to assign the VM. Valid Values: `Standard`, `Basic`"
                                             subnet_name:
                                                 type: str
-                                                description:
-                                                    - Defines the subnet to which the network interface will be connected.
+                                                description: "Defines the subnet to which the network interface will be connected."
                             os_disk:
                                 type: dict
-                                description:
-                                    - Specify OS disk specification other than default.
+                                description: "Specify OS disk specification other than default."
                                 suboptions:
                                     size_g_b:
                                         type: int
-                                        description:
-                                            - The size of the OS disk in GB.
+                                        description: "The size of the OS disk in GB."
                                     type:
                                         type: str
-                                        description:
-                                            - "Type of OS disk. Valid Values: `Standard_LRS`, `Premium_LRS`, `StandardSSD_LRS`"
+                                        description: "Type of OS disk. Valid Values: `Standard_LRS`, `Premium_LRS`, `StandardSSD_LRS`"
                             secrets:
                                 type: list
                                 elements: dict
-                                description:
-                                    - Set of certificates that should be installed on the VM
+                                description: "Set of certificates that should be installed on the VM"
                                 suboptions:
                                     source_vault:
                                         type: dict
-                                        description:
-                                            - The key vault reference, contains the required certificates
+                                        description: "The key vault reference, contains the required certificates"
                                         suboptions:
                                             name:
                                                 type: str
-                                                description:
-                                                    - The name of the key vault
+                                                description: "The name of the key vault"
                                             resource_group_name:
                                                 type: str
-                                                description:
-                                                    - The resource group name of the key vault
+                                                description: "The resource group name of the key vault"
                                     vault_certificates:
                                         type: list
                                         elements: dict
-                                        description:
-                                            - The required certificate references
+                                        description: "The required certificate references"
                                         suboptions:
                                             certificate_store:
                                                 type: str
-                                                description:
-                                                    - The certificate store directory the VM.
+                                                description: "The certificate store directory the VM."
                                             certificate_url:
                                                 type: str
-                                                description:
-                                                    - The URL of the certificate under the key vault
+                                                description: "The URL of the certificate under the key vault"
                             shutdown_script:
                                 type: str
-                                description:
-                                    - Defines the shutdown script (encoded at Base64) to execute once the VM is detached.
+                                description: "Defines the shutdown script (encoded at Base64) to execute once the VM is detached."
                             tags:
-                                type: list
+                                description: "Defines the tags (unique key-value pairs) to tag your resources."
+                                type: list                                
                                 elements: dict
                                 suboptions:
                                     tag_key:
                                         type: str
+                                        description: "Tag key for all resources."
                                     tag_value:
                                         type: str
+                                        description: "Tag value for all resources."
                             vm_name:
                                 type: str
-                                description:
-                                    - Set a VM name that will be persisted throughout the entire node lifecycle.
+                                description: "Set a VM name that will be persisted throughout the entire node lifecycle."
                             vm_name_prefix:
                                 type: str
-                                description:
-                                    - Set a VM name prefix to be used for all launched VMs and the VM resources.
+                                description: "Set a VM name prefix to be used for all launched VMs and the VM resources."
 """
 
 EXAMPLES = """
@@ -688,37 +581,37 @@ EXAMPLES = """
         do_not_update:
           - compute.product
         managed_instance:
-          name: ansible-managed-instance-example
-          description: a nice Managed Instance created via Ansible
-          region: us-west-2
-          persistence:
-            persist_block_devices: true
-            persist_root_device: true
-            block_devices_mode: "onLaunch"
-          strategy:
-            life_cycle: "spot"
-            revert_to_spot:
-              perform_at: "always"
-          health_check:
-            type: "EC2"
-            grace_period: 120
-            unhealthy_duration: 120
-          compute:
-            product: "Linux/UNIX"
-            launch_specification:
-              image_id: "ami-082b5a644766e0e6f"
-              instance_types:
-                types: [ "t2.micro", "t3.small", "t3.micro" ]
-                preferred_type: "t2.micro"
-              key_pair: "shibel-core-oregon"
-              security_group_ids:
-                - "sg-XXXXXX"
-            subnet_ids:
-              - "subnet-XXXXX"
-            vpc_id: "vpc-XXXX"
-          scheduling:
-            tasks:
-              - is_enabled: true
+            name: ansible-managed-instance-example
+            description: a nice Managed Instance created via Ansible
+            region: us-west-2
+            persistence:
+                persist_block_devices: true
+                persist_root_device: true
+                block_devices_mode: "onLaunch"
+            strategy:
+                life_cycle: "spot"
+                revert_to_spot:
+                    perform_at: "always"
+            health_check:
+                type: "EC2"
+                grace_period: 120
+                unhealthy_duration: 120
+            compute:
+                product: "Linux/UNIX"
+                launch_specification:
+                    image_id: "ami-082b5a644766e0e6f"
+                instance_types:
+                    types: [ "t2.micro", "t3.small", "t3.micro" ]
+                    preferred_type: "t2.micro"
+                key_pair: "shibel-core-oregon"
+                security_group_ids:
+                    - "sg-XXXXXX"
+                subnet_ids:
+                    - "subnet-XXXXX"
+                vpc_id: "vpc-XXXX"
+            scheduling:
+                tasks:
+                    - is_enabled: true
                 frequency: "weekly"
                 start_time: "2050-22-22T00:00:00Z"
                 task_type: "pause"
