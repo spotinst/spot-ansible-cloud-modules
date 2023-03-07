@@ -256,8 +256,7 @@ options:
                         elements: str
                         description: "List of Azure Availability Zones in the defined region. Valid Values: `1`, `2`, `3`"
                     preferred_zone:
-                        type: list
-                        elements: str
+                        type: str
                         description: "The AZ to prioritize when launching VMs. Valid Values: `1`, `2`, `3`"
                     vm_sizes:
                         type: dict
@@ -941,6 +940,7 @@ def handle_create_stateful_node(client, stateful_node_module_copy):
     ami_sdk_object = turn_to_model(
         stateful_node_module_copy, "stateful_node"
     )
+
     res: dict = client.create_stateful_node(node=ami_sdk_object)
     stateful_node_id = res["id"]
     message = "Stateful node created successfully"
