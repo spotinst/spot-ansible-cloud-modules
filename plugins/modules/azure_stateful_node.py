@@ -4,6 +4,7 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+import json
 
 __metaclass__ = type
 
@@ -649,7 +650,7 @@ HAS_ANSIBLE_MODULE = False
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 
 try:
-    from ansible.module_utils.spot_ansible_module import SpotAnsibleModule
+    from ..module_utils.spot_ansible_module import SpotAnsibleModule
     import copy
 
     HAS_ANSIBLE_MODULE = True
@@ -773,7 +774,10 @@ def turn_to_model(content, field_name: str, curr_path=None):
 def find_ssn_with_same_name(stateful_nodes, name):
     ret_val = []
     for node in stateful_nodes:
-        if node["config"]["name"] == name:
+        file = open("debug.txt", "w")
+        file.write(json.dumps(stateful_nodes))
+        file.close()
+        if node["name"] == name:
             ret_val.append(node)
 
     return ret_val
@@ -980,6 +984,7 @@ def attempt_stateful_action(action_type, client, stateful_node_id, message):
 
 
 def main():
+    global HAS_ANSIBLE_MODULE
     persistence_fields = dict(
         data_disks_persistence_mode=dict(type="str"),
         os_disk_persistence_mode=dict(type="str"),
