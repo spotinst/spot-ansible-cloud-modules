@@ -532,8 +532,7 @@ try:
     from ansible.module_utils.spot_ansible_module import SpotAnsibleModule
     import copy
 
-    HAS_ANSIBLE_MODULE = True
-        
+    HAS_ANSIBLE_MODULE = True        
 except ImportError as e:
     pass
 
@@ -657,6 +656,7 @@ def find_mis_with_same_name(managed_instances, name):
     for mi in managed_instances:
         if mi["config"]["name"] == name:
             ret_val.append(mi)
+
     return ret_val
 
 
@@ -1079,11 +1079,11 @@ def main():
     except (AttributeError, NameError, ImportError):
         module = AnsibleModule(argument_spec=fields)
         HAS_ANSIBLE_MODULE = False
+
     if not HAS_ANSIBLE_MODULE:
         module.fail_json(
             msg="the Spotinst Ansible module is required."
-        )
-    
+        )    
     if not HAS_SPOTINST_SDK:
         module.fail_json(
             msg="the Spotinst SDK library is required. (pip install spotinst-sdk2)"
