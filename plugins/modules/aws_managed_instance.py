@@ -4,8 +4,6 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
-import epdb
-import json
 
 __metaclass__ = type
 
@@ -531,12 +529,12 @@ HAS_ANSIBLE_MODULE = False
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 
 try:
-    from ..module_utils.spot_ansible_module import SpotAnsibleModule
+    from ansible.module_utils.spot_ansible_module import SpotAnsibleModule
     import copy
 
     HAS_ANSIBLE_MODULE = True
-    
-except Exception as e:
+        
+except ImportError as e:
     pass
 
 try:
@@ -659,9 +657,6 @@ def find_mis_with_same_name(managed_instances, name):
     for mi in managed_instances:
         if mi["config"]["name"] == name:
             ret_val.append(mi)
-    f = open("managed_instance_response_body.txt", "w")
-    f.write(json.dumps(managed_instances))
-    f.close()
     return ret_val
 
 
@@ -870,11 +865,6 @@ def attempt_mi_action(action_type, client, managed_instance_id, message):
 
 
 def main():
-    global HAS_ANSIBLE_MODULE
-    file = open("debugfile.txt", "a")  # append mode
-    file.write(f"Inside main: {HAS_ANSIBLE_MODULE}")
-    file.close()
-
     task_fields = dict(
         task_type=dict(type="str"),
         start_time=dict(type="str"),
@@ -1084,7 +1074,15 @@ def main():
     # unchecked imports are not allowed for modules
     # so we have to guard against the import AnsibleModule statement, even though AnsibleModule
     # is part of ansible-core.
-    module = SpotAnsibleModule(argument_spec=fields)
+    try:
+        module = SpotAnsibleModule(argument_spec=fields)
+    except (AttributeError, NameError, ImportError):
+        module = AnsibleModule(argument_spec=fields)
+        HAS_ANSIBLE_MODULE = False
+    if not HAS_ANSIBLE_MODULE:
+        module.fail_json(
+            msg="the Spotinst Ansible module is required."
+        )
     
     if not HAS_SPOTINST_SDK:
         module.fail_json(
