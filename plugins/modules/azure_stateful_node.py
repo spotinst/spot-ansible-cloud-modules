@@ -670,16 +670,20 @@ except ImportError as e:
 
 
 CLS_NAME_BY_ATTR_NAME = {
-    "stateful_node.compute.launch_specification.load_balancers_config": "LoadBalancerConfig"
+    "stateful_node.compute.launch_specification.load_balancers_config": "LoadBalancerConfig",
+    "stateful_node.compute.launch_specification.network.network_interfaces": "NetworkInterface",
+    "stateful_node.compute.launch_specification.data_disks": "DataDisk",
+    "stateful_node.compute.launch_specification.tags": "Tag",        
+    "stateful_node.strategy.signals": "Signal",
+    "stateful_node.scheduling.tasks": "SchedulingTask"
 }
 
 LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
-    "stateful_node.scheduling.tasks": "SchedulingTask",
     "stateful_node.compute.launch_specification.load_balancers_config.load_balancers": "LoadBalancer",
-    "stateful_node_config.deletion_config.deallocation_config.disk_deallocation_config": "Deallocate",
-    "stateful_node_config.deletion_config.deallocation_config.network_deallocation_config": "Deallocate",
-    "stateful_node_config.deletion_config.deallocation_config.public_ip_deallocation_config": "Deallocate",
-    "stateful_node_config.deletion_config.deallocation_config.snapshot_deallocation_config": "Deallocate"
+    #"stateful_node_config.deletion_config.deallocation_config.disk_deallocation_config": "Deallocate",
+    #"stateful_node_config.deletion_config.deallocation_config.network_deallocation_config": "Deallocate",
+    #"stateful_node_config.deletion_config.deallocation_config.public_ip_deallocation_config": "Deallocate",
+    #"stateful_node_config.deletion_config.deallocation_config.snapshot_deallocation_config": "Deallocate"
 }
 
 
@@ -758,6 +762,10 @@ def turn_to_model(content, field_name: str, curr_path=None):
         else:
             curr_path = field_name
 
+        f = open("config_var.txt", "a+")
+        f.write(field_name)
+        f.close()
+
         override = find_in_overrides(curr_path)
         key_to_use = override if override else to_pascal_case(field_name)
 
@@ -774,9 +782,6 @@ def turn_to_model(content, field_name: str, curr_path=None):
 def find_ssn_with_same_name(stateful_nodes, name):
     ret_val = []
     for node in stateful_nodes:
-        file = open("debug.txt", "w")
-        file.write(json.dumps(stateful_nodes))
-        file.close()
         if node["name"] == name:
             ret_val.append(node)
 
@@ -960,10 +965,32 @@ def handle_deletion_config(delete_args, ssn_models, module):
 
         if deletion_config is not None:
             deallocation_config = deletion_config.get("deallocation_config")
-
+            
             if deallocation_config is not None:
-                dealloc_sdk_object = turn_to_model(deallocation_config, ssn_models.DeallocationConfig())
-                delete_args["deallocation_config"] = dealloc_sdk_object
+                disk_deallocation_config = deallocation_config.get("disk_deallocation_config")
+                network_deallocation_config = deallocation_config.get("network_deallocation_config")
+                public_ip_deallocation_config = deallocation_config.get("public_ip_deallocation_config")
+                snapshot_deallocation_config = deallocation_config.get("snapshot_deallocation_config")
+                should_terminate_vm = deallocation_config.get("should_terminate_vm")
+
+                if disk_deallocation_config is not None:
+                    dealloc_sdk_object = turn_to_model(disk_deallocation_config, ssn_models.Deallocate())
+                    delete_args["deallocation_config"]["disk_deallocation_config"] = dealloc_sdk_object
+
+                if network_deallocation_config is not None:
+                    dealloc_sdk_object = turn_to_model(network_deallocation_config, ssn_models.Deallocate())
+                    delete_args["deallocation_config"]["network_deallocation_config"] = dealloc_sdk_object
+
+                if public_ip_deallocation_config is not None:
+                    dealloc_sdk_object = turn_to_model(public_ip_deallocation_config, ssn_models.Deallocate())
+                    delete_args["deallocation_config"]["public_ip_deallocation_config"] = dealloc_sdk_object
+
+                if snapshot_deallocation_config is not None:
+                    dealloc_sdk_object = turn_to_model(snapshot_deallocation_config, ssn_models.Deallocate())
+                    delete_args["deallocation_config"]["snapshot_deallocation_config"] = dealloc_sdk_object
+
+                if should_terminate_vm is not None:
+                    delete_args["deallocation_config"]["should_terminate_vm"] = should_terminate_vm
 
 
 def attempt_stateful_action(action_type, client, stateful_node_id, message):
