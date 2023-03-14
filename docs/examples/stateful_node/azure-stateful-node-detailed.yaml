@@ -1,0 +1,93 @@
+- hosts: localhost
+  tasks:
+    - name: stateful_node
+      spot.cloud_modules.azure_stateful_node:
+        state: present    # absent = delete, present = create/update
+        uniqueness_by: "id"
+        do_not_update:
+          - region
+          - resource_group_name        
+        stateful_node:
+          name: "ansible-stateful-node-example"
+          description: "a sample Stateful Node created via Ansible"
+          region: "eastus"
+          resource_group_name: "AutomationResourceGroup"
+          persistence:
+            data_disks_persistence_mode: "reattach"
+            os_disk_persistence_mode: "reattach"
+            should_persist_data_disks: true
+            should_persist_network: true
+            should_persist_os_disk: true
+          health:
+            health_check_types: ["vmState"]
+            auto_healing: true
+            grace_period: 300
+            unhealthy_duration: 120
+          scheduling:
+            tasks:
+              - is_enabled: true
+                cron_expression: "* * * 1 *"
+                type: "pause"
+              - is_enabled: false
+                cron_expression: "* * * 2 *"
+                type: "resume"                
+          strategy:
+            draining_timeout: 300
+            fallback_to_od: true
+            preferred_lifecycle: "spot"
+            revert_to_spot:
+              perform_at: "always"
+            signals:
+              - timeout: 180
+                type: "vmReady"
+              - timeout: 210
+                type: "vmReadyToShutdown"  
+          compute:
+            os: "Linux"
+            zones: ["1", "2"]
+            preferred_zone: "2"
+            vm_sizes: 
+              od_sizes: ["standard_a1_v2", "standard_a2_v2"]
+              spot_sizes: ["standard_a1_v2", "standard_a2_v2"]
+              preferred_spot_sizes: ["standard_a1_v2"]
+            launch_specification:
+              boot_diagnostics:
+                is_enabled: true
+                type: "managed"
+              custom_data: "VGhpcyBpcyBjdXN0b20gZGF0YSBmaWVsZA=="
+              data_disks:
+                - lun: 0
+                  size_g_b: 30
+                  type: "Standard_LRS"
+                - lun: 1
+                  size_g_b: 32
+                  type: "StandardSSD_LRS"
+              image:
+                marketplace:
+                  publisher: "Canonical"
+                  version: "latest"
+                  sku: "18.04-LTS"
+                  offer: "UbuntuServer"
+              login:
+                user_name: "ubuntu"
+                ssh_public_key: <provide-your-ssh-key-here>
+              network:
+                resource_group_name: "AutomationResourceGroup"
+                virtual_network_name: "Automation-VirtualNetwork"
+                network_interfaces:
+                  - is_primary: true
+                    assign_public_ip: true
+                    public_ip_sku: "Standard"
+                    subnet_name: "Automation-PrivateSubnet"
+                    enable_ip_forwarding: true
+              os_disk:
+                size_g_b: 30
+                type: "Standard_LRS"
+              shutdown_script: "VGhpcyBpcyBzaHV0ZG93biBzY3JpcHQ="
+              tags:
+                - tag_key: "Creator"
+                  tag_value: "Ansible Test"
+                - tag_key: "Name"
+                  tag_value: "Ansible Detailed Example"
+      register: result
+    - debug: var=result

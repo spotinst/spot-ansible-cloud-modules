@@ -575,60 +575,74 @@ EXAMPLES = """
 # Basic Example
 - hosts: localhost
   tasks:
-    - name: managed instance
-      aws_managed_instance:
+    - name: stateful_node
+      spot.cloud_modules.azure_stateful_node:
         state: present
+        uniqueness_by: "id"
         do_not_update:
-          - compute.product
-        managed_instance:
-            name: ansible-managed-instance-example
-            description: a nice Managed Instance created via Ansible
-            region: us-west-2
-            persistence:
-                persist_block_devices: true
-                persist_root_device: true
-                block_devices_mode: "onLaunch"
-            strategy:
-                life_cycle: "spot"
-                revert_to_spot:
-                    perform_at: "always"
-            health_check:
-                type: "EC2"
-                grace_period: 120
-                unhealthy_duration: 120
-            compute:
-                product: "Linux/UNIX"
-                launch_specification:
-                    image_id: "ami-082b5a644766e0e6f"
-                instance_types:
-                    types: [ "t2.micro", "t3.small", "t3.micro" ]
-                    preferred_type: "t2.micro"
-                key_pair: "shibel-core-oregon"
-                security_group_ids:
-                    - "sg-XXXXXX"
-                subnet_ids:
-                    - "subnet-XXXXX"
-                vpc_id: "vpc-XXXX"
-            scheduling:
-                tasks:
-                    - is_enabled: true
-                frequency: "weekly"
-                start_time: "2050-22-22T00:00:00Z"
-                task_type: "pause"
-          integrations:
-            route53:
-              domains:
-                - hosted_zone_id: "1"
-                  spotinst_account_id: "act-xxx"
-                  record_set_type: "a"
-                  record_sets:
-                    - name: "some_name"
-                      use_public_ip: true
-            load_balancers_config:
-              load_balancers:
-                - name: "some_lb"
-                  arn: "arn:aws:elasticloadbalancing:us-east-2:123456789012:loadbalancer/app/my-load-balancer/1234567890123456"
-                  type: "CLASSIC"
+          - region
+          - resource_group_name
+        stateful_node:
+          name: "ansible-stateful-node-example"
+          description: "a sample Stateful Node created via Ansible"
+          region: "eastus"
+          resource_group_name: "AutomationResourceGroup"
+          persistence:
+            data_disks_persistence_mode: "reattach"
+            os_disk_persistence_mode: "reattach"
+            should_persist_data_disks: true
+            should_persist_network: true
+            should_persist_os_disk: true
+          health:
+            health_check_types: ["vmState"]
+            auto_healing: true
+            grace_period: 300
+            unhealthy_duration: 120           
+          strategy:
+            draining_timeout: 300
+            fallback_to_od: true
+            preferred_lifecycle: "spot"
+            revert_to_spot:
+              perform_at: "always"
+          compute:
+            os: "Linux"
+            zones: ["1", "2"]
+            preferred_zone: "2"
+            vm_sizes: 
+              od_sizes: ["standard_a1_v2", "standard_a2_v2"]
+              spot_sizes: ["standard_a1_v2", "standard_a2_v2"]
+              preferred_spot_sizes: ["standard_a1_v2"]
+            launch_specification:
+              data_disks:
+                - lun: 0
+                  size_g_b: 30
+                  type: "Standard_LRS"
+              image:
+                marketplace:
+                  publisher: "Canonical"
+                  version: "latest"
+                  sku: "18.04-LTS"
+                  offer: "UbuntuServer"
+              login:
+                user_name: "ubuntu"
+                ssh_public_key: <add-your-ssh-key-here>
+              network:
+                resource_group_name: "AutomationResourceGroup"
+                virtual_network_name: "Automation-VirtualNetwork"
+                network_interfaces:
+                  - is_primary: true
+                    assign_public_ip: true
+                    public_ip_sku: "Standard"
+                    subnet_name: "Automation-PrivateSubnet"
+                    enable_ip_forwarding: true
+              os_disk:
+                size_g_b: 30
+                type: "Standard_LRS"
+              tags:
+                - tag_key: "Creator"
+                  tag_value: "Ansible Test"
+                - tag_key: "Name"
+                  tag_value: "Ansible Basic Example"
       register: result
     - debug: var=result
 """
@@ -644,7 +658,6 @@ stateful_node_id:
 
 HAS_SPOTINST_SDK = False
 HAS_ANSIBLE_MODULE = False
-
 
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback

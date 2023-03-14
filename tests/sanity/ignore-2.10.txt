@@ -34,6 +34,12 @@ plugins/modules/event_subscription.py compile-2.7!skip
 plugins/modules/event_subscription.py import-2.7!skip
 plugins/modules/event_subscription.py compile-3.5!skip
 plugins/modules/event_subscription.py import-3.5!skip
+plugins/modules/azure_stateful_node.py compile-2.6!skip
+plugins/modules/azure_stateful_node.py import-2.6!skip
+plugins/modules/azure_stateful_node.py compile-2.7!skip
+plugins/modules/azure_stateful_node.py import-2.7!skip
+plugins/modules/azure_stateful_node.py compile-3.5!skip
+plugins/modules/azure_stateful_node.py import-3.5!skip
 tests/unit/plugins/modules/test_aws_elastigroup.py compile-2.6!skip
 tests/unit/plugins/modules/test_aws_elastigroup.py import-2.6!skip
 tests/unit/plugins/modules/test_aws_elastigroup.py compile-2.7!skip
@@ -64,3 +70,9 @@ tests/unit/plugins/modules/test_event_subscription.py compile-2.7!skip
 tests/unit/plugins/modules/test_event_subscription.py import-2.7!skip
 tests/unit/plugins/modules/test_event_subscription.py compile-3.5!skip
 tests/unit/plugins/modules/test_event_subscription.py import-3.5!skip
+tests/unit/plugins/modules/test_azure_stateful_node.py compile-2.6!skip
+tests/unit/plugins/modules/test_azure_stateful_node.py import-2.6!skip
+tests/unit/plugins/modules/test_azure_stateful_node.py compile-2.7!skip
+tests/unit/plugins/modules/test_azure_stateful_node.py import-2.7!skip
+tests/unit/plugins/modules/test_azure_stateful_node.py compile-3.5!skip
+tests/unit/plugins/modules/test_azure_stateful_node.py import-3.5!skip

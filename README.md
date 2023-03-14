@@ -29,6 +29,7 @@ Name | Description
 [spot.cloud_modules.aws_ocean_k8s](docs/examples/ocean/README.md)|Manage Spot Ocean Kubernetes Clusters
 [spot.cloud_modules.aws_mrscaler](docs/examples/emr/README.md)|Manage Spot MR Scalers
 [spot.cloud_modules.event_subscription](docs/examples/events/README.md)|Manage Spot Event Subscriptions
+[spot.cloud_modules.azure_stateful_node](docs/examples/stateful_node/README.md)|Manage Azure Stateful Nodes
 <!--end collection content-->
 
 ## Installing this collection

@@ -1,0 +1,64 @@
+- hosts: localhost
+  tasks:
+    - name: stateful_node
+      spot.cloud_modules.azure_stateful_node:
+        state: present   # absent = delete, present = create/update
+        uniqueness_by: "id"
+        id: "ssn-648a40b1"
+        do_not_update:
+          - region
+          - resource_group_name
+        action: "pause" # resume, recycle <------ if you would just like to perform an action, leave all other fields as is and include this line.    
+        stateful_node:
+          name: "ansible-stateful-node-example-with-action"
+          description: "a sample Stateful Node created via Ansible"
+          region: "eastus"
+          resource_group_name: "AutomationResourceGroup"
+          persistence:
+            data_disks_persistence_mode: "reattach"
+            os_disk_persistence_mode: "reattach"
+            should_persist_data_disks: true
+            should_persist_network: true
+            should_persist_os_disk: true
+          health:
+            health_check_types: ["vmState"]
+            auto_healing: true
+            grace_period: 300
+            unhealthy_duration: 120
+          scheduling:
+            tasks:
+              - is_enabled: false
+                cron_expression: "* * * 1 *"
+                type: "pause"
+              - is_enabled: true
+                cron_expression: "* * * 2 *"
+                type: "resume"                
+          strategy:
+            draining_timeout: 300
+            fallback_to_od: true
+            preferred_lifecycle: "spot"
+            revert_to_spot:
+              perform_at: "always"
+            signals:
+              - timeout: 180
+                type: "vmReady"
+              - timeout: 210
+                type: "vmReadyToShutdown"  
+          compute:
+            zones: ["1", "2"]
+            preferred_zone: "2"
+            vm_sizes: 
+              od_sizes: ["standard_a1_v2", "standard_a2_v2"]
+              spot_sizes: ["standard_a1_v2", "standard_a2_v2"]
+              preferred_spot_sizes: ["standard_a1_v2"]
+            launch_specification:
+              boot_diagnostics:
+                is_enabled: true
+                type: "managed"
+              tags:
+                - tag_key: "Creator"
+                  tag_value: "Ansible Test"
+                - tag_key: "Name"
+                  tag_value: "Ansible Detailed Example With Action"
+      register: result
+    - debug: var=result
