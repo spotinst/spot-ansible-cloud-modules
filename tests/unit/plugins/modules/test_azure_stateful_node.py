@@ -10,7 +10,7 @@ from spotinst_sdk2.models.stateful_node import (
     Persistence,
     Health,
     Scheduling,
-    SchedulingTask,    
+    SchedulingTask,
     Strategy,
     Signal,
     RevertToSpot,
@@ -38,29 +38,29 @@ class TestTurnToModel(unittest.TestCase):
         """Format input into proper json structure"""
 
         input_dict = {
-	        'name': 'ansible-stateful-node-example',
-	        'region': 'eastus',
-	        'resource_group_name': 'AutomationResourceGroup',
-	        'description': 'a sample Stateful Node created via Ansible',
-	        'persistence': {
-		        'data_disks_persistence_mode': 'reattach',
-		        'os_disk_persistence_mode': 'onlaunch',
-		        'should_persist_data_disks': True,
-		        'should_persist_network': True,
-		        'should_persist_os_disk': True
-	        },
-	        'health': {
-		        'health_check_types': ["vmState"],
-		        'grace_period': 300,
-		        'unhealthy_duration': 120,
-		        'auto_healing': True
+            'name': 'ansible-stateful-node-example',
+            'region': 'eastus',
+            'resource_group_name': 'AutomationResourceGroup',
+            'description': 'a sample Stateful Node created via Ansible',
+            'persistence': {
+                'data_disks_persistence_mode': 'reattach',
+                'os_disk_persistence_mode': 'onlaunch',
+                'should_persist_data_disks': True,
+                'should_persist_network': True,
+                'should_persist_os_disk': True
+            },
+            'health': {
+                'health_check_types': ["vmState"],
+                'grace_period': 300,
+                'unhealthy_duration': 120,
+                'auto_healing': True
 	        },
 	        'scheduling': {
 		        'tasks': [{
 			        'is_enabled': True,
 			        'cron_expression': '* * * 1 *',
 			        'type': 'pause'
-		        }, 
+		        },
                 {
 			        'is_enabled': False,
 			        'cron_expression': '* * * 3 *',
@@ -77,7 +77,7 @@ class TestTurnToModel(unittest.TestCase):
 		        'signals': [{
 			        'timeout': 180,
 			        'type': 'vmReady'
-		        }, 
+		        },
                 {
 			        'timeout': 210,
 			        'type': 'vmReadyToShutdown'
@@ -102,7 +102,7 @@ class TestTurnToModel(unittest.TestCase):
 				        'lun': 0,
 				        'size_g_b': 30,
 				        'type': 'Standard_LRS'
-			        }, 
+			        },
                     {
 				        'lun': 1,
 				        'size_g_b': 32,
@@ -139,7 +139,7 @@ class TestTurnToModel(unittest.TestCase):
 			        'tags': [{
 				        'tag_key': 'Creator',
 				        'tag_value': 'Ansible Test'
-			        }, 
+			        },
                     {
 				        'tag_key': 'Name',
 				        'tag_value': 'Ansible Detailed Example'
@@ -164,14 +164,14 @@ class TestTurnToModel(unittest.TestCase):
         self.assertEqual(ssn.description, "a sample Stateful Node created via Ansible")
 
         # test persistence
-        expected_persistence = Persistence(data_disks_persistence_mode = 'reattach',
-		                                    os_disk_persistence_mode = 'onlaunch',
-		                                    should_persist_data_disks = True,
-		                                    should_persist_network = True,
-		                                    should_persist_os_disk = True)
+        expected_persistence = Persistence(data_disks_persistence_mode='reattach',
+		                                    os_disk_persistence_mode='onlaunch',
+		                                    should_persist_data_disks=True,
+		                                    should_persist_network=True,
+		                                    should_persist_os_disk=True)
 
         actual_persistence = ssn.persistence
-        
+
         self.assertEqual(actual_persistence.data_disks_persistence_mode, expected_persistence.data_disks_persistence_mode)
         self.assertEqual(actual_persistence.os_disk_persistence_mode, expected_persistence.os_disk_persistence_mode)
         self.assertEqual(actual_persistence.should_persist_data_disks, expected_persistence.should_persist_data_disks)
@@ -179,19 +179,19 @@ class TestTurnToModel(unittest.TestCase):
         self.assertEqual(actual_persistence.should_persist_os_disk, expected_persistence.should_persist_os_disk)
 
         # test health
-        expected_health = Health(health_check_types = [ "vmState" ], grace_period = 300, unhealthy_duration = 120, auto_healing = True)
-        
+        expected_health = Health(health_check_types=[ "vmState" ], grace_period=300, unhealthy_duration=120, auto_healing=True)
+
         actual_health = ssn.health
-        
+
         self.assertEqual(actual_health.health_check_types, expected_health.health_check_types)
         self.assertEqual(actual_health.auto_healing, expected_health.auto_healing)
         self.assertEqual(actual_health.grace_period, expected_health.grace_period)
         self.assertEqual(actual_health.unhealthy_duration, expected_health.unhealthy_duration)
 
         # test scheduling
-        expected_scheduling = Scheduling(tasks=[SchedulingTask(is_enabled = True, cron_expression = "* * * 1 *", type = "pause"),
-                                                SchedulingTask(is_enabled = False, cron_expression = "* * * 3 *", type = "resume")])
-        
+        expected_scheduling = Scheduling(tasks=[SchedulingTask(is_enabled=True, cron_expression="* * * 1 *", type="pause"),
+                                                SchedulingTask(is_enabled=False, cron_expression="* * * 3 *", type="resume")])
+
         actual_scheduling = ssn.scheduling
         self.assertEqual(len(actual_scheduling.tasks), len(expected_scheduling.tasks))
 
@@ -204,10 +204,10 @@ class TestTurnToModel(unittest.TestCase):
         self.assertEqual(actual_scheduling.tasks[1].type, expected_scheduling.tasks[1].type)
 
         # test strategy
-        expected_strategy = Strategy(draining_timeout = 100, fallback_to_od = True, preferred_lifecycle = "spot", 
-                                     revert_to_spot = RevertToSpot( perform_at = "always"), 
-                                     signals = [Signal(timeout = 180, type = "vmReady"), Signal(timeout = 210, type = "vmReadyToShutdown")])
-        
+        expected_strategy = Strategy(draining_timeout=100, fallback_to_od=True, preferred_lifecycle="spot",
+                                     revert_to_spot=RevertToSpot( perform_at="always"),
+                                     signals=[Signal(timeout=180, type="vmReady"), Signal(timeout=210, type="vmReadyToShutdown")])
+
         actual_strategy = ssn.strategy
 
         self.assertEqual(actual_strategy.draining_timeout, expected_strategy.draining_timeout)
@@ -232,16 +232,16 @@ class TestTurnToModel(unittest.TestCase):
         self.assertEqual(sorted(ssn.compute.vm_sizes.preferred_spot_sizes), sorted(['standard_a1_v2']))
 
         # test LaunchSpecification
-        expected_boot_diagnostics = BootDiagnostics(is_enabled = True, type = "managed")        
-        actual_boot_diagnostics = ssn.compute.launch_specification.boot_diagnostics        
+        expected_boot_diagnostics = BootDiagnostics(is_enabled=True, type="managed")
+        actual_boot_diagnostics = ssn.compute.launch_specification.boot_diagnostics
         self.assertEqual(actual_boot_diagnostics.is_enabled, expected_boot_diagnostics.is_enabled)
         self.assertEqual(actual_boot_diagnostics.type, expected_boot_diagnostics.type)
 
         self.assertEqual(ssn.compute.launch_specification.custom_data, "VGhpcyBpcyBjdXN0b20gZGF0YSBmaWVsZA==")
 
-        expected_datadisks = [DataDisk(lun = 0, size_g_b = 30, type = "Standard_LRS"),
-                            DataDisk(lun = 1, size_g_b = 32, type = "StandardSSD_LRS")]
-        
+        expected_datadisks = [DataDisk(lun=0, size_g_b=30, type="Standard_LRS"),
+                            DataDisk(lun=1, size_g_b=32, type="StandardSSD_LRS")]
+
         actual_datadisks = ssn.compute.launch_specification.data_disks
         self.assertEqual(len(actual_datadisks), len(expected_datadisks))
 
@@ -253,22 +253,22 @@ class TestTurnToModel(unittest.TestCase):
         self.assertEqual(actual_datadisks[1].size_g_b, expected_datadisks[1].size_g_b)
         self.assertEqual(actual_datadisks[1].type, expected_datadisks[1].type)
 
-        expected_marketplace = Marketplace(publisher = "Canonical", offer = "latest", sku = "18.04-LTS", version = "UbuntuServer")        
-        actual_marketplace = ssn.compute.launch_specification.image.marketplace   
+        expected_marketplace = Marketplace(publisher="Canonical", offer="UbuntuServer", sku="18.04-LTS", version="latest")
+        actual_marketplace = ssn.compute.launch_specification.image.marketplace
 
         self.assertEqual(actual_marketplace.publisher, expected_marketplace.publisher)
         self.assertEqual(actual_marketplace.offer, expected_marketplace.offer)
         self.assertEqual(actual_marketplace.sku, expected_marketplace.sku)
         self.assertEqual(actual_marketplace.version, expected_marketplace.version)
 
-        expected_login = Login(user_name = "ubuntu", ssh_public_key = "my-ssh-key")        
-        actual_login = ssn.compute.launch_specification.login        
+        expected_login = Login(user_name="ubuntu", ssh_public_key="my-ssh-key")
+        actual_login = ssn.compute.launch_specification.login
         self.assertEqual(actual_login.user_name, expected_login.user_name)
         self.assertEqual(actual_login.ssh_public_key, expected_login.ssh_public_key)
 
-        expected_network = Network(resource_group_name = "AutomationResourceGroup", 
-                                   virtual_network_name = "Automation-VirtualNetwork",
-				                    network_interfaces = [ NetworkInterface(is_primary = True, assign_public_ip = True, public_ip_sku = "Standard", subnet_name = "Automation-PrivateSubnet", enable_ip_forwarding = True) ])
+        expected_network = Network(resource_group_name="AutomationResourceGroup",
+                                   virtual_network_name="Automation-VirtualNetwork",
+				                    network_interfaces=[ NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard", subnet_name="Automation-PrivateSubnet", enable_ip_forwarding=True) ])
 
         actual_network = ssn.compute.launch_specification.network
 
@@ -278,24 +278,21 @@ class TestTurnToModel(unittest.TestCase):
         self.assertEqual(actual_network.network_interfaces[0].is_primary, expected_network.network_interfaces[0].is_primary)
         self.assertEqual(actual_network.network_interfaces[0].assign_public_ip, expected_network.network_interfaces[0].assign_public_ip)
         self.assertEqual(actual_network.network_interfaces[0].public_ip_sku, expected_network.network_interfaces[0].public_ip_sku)
-        self.assertEqual(actual_network.network_interfaces[0].subnet_name, expected_network.network_interfaces[0].subnet_name)                
-        self.assertEqual(actual_network.network_interfaces[0].enable_ip_forwarding, expected_network.network_interfaces[0].enable_ip_forwarding)  
+        self.assertEqual(actual_network.network_interfaces[0].subnet_name, expected_network.network_interfaces[0].subnet_name)
+        self.assertEqual(actual_network.network_interfaces[0].enable_ip_forwarding, expected_network.network_interfaces[0].enable_ip_forwarding)
 
-        expected_os_disk = OsDisk(size_g_b = 30, type = "Standard_LRS")        
-        actual_os_disk = ssn.compute.launch_specification.os_disk        
+        expected_os_disk = OsDisk(size_g_b=30, type="Standard_LRS")
+        actual_os_disk = ssn.compute.launch_specification.os_disk
         self.assertEqual(actual_os_disk.size_g_b, expected_os_disk.size_g_b)
         self.assertEqual(actual_os_disk.type, expected_os_disk.type)
 
         self.assertEqual(ssn.compute.launch_specification.shutdown_script, "VGhpcyBpcyBzaHV0ZG93biBzY3JpcHQ=")
 
-        expected_tags = [ Tag(tag_key = "Creator", tag_value = "Ansible Test"), Tag(tag_key = "Name", tag_value = "Ansible Detailed Example")]        
-        actual_tags = ssn.compute.launch_specification.tags     
+        expected_tags = [ Tag(tag_key="Creator", tag_value="Ansible Test"), Tag(tag_key="Name", tag_value="Ansible Detailed Example")]
+        actual_tags = ssn.compute.launch_specification.tags
 
         self.assertEqual(len(actual_tags), len(expected_tags))
         self.assertEqual(actual_tags[0].tag_key, expected_tags[0].tag_key)
         self.assertEqual(actual_tags[0].tag_value, expected_tags[0].tag_value)
         self.assertEqual(actual_tags[1].tag_key, expected_tags[1].tag_key)
         self.assertEqual(actual_tags[1].tag_value, expected_tags[1].tag_value)
-
-
-

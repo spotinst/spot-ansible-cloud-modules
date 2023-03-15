@@ -4,7 +4,6 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
-import json
 
 __metaclass__ = type
 
@@ -27,12 +26,10 @@ options:
         type: str
         description:
             - "Optional parameter that allows to set an token inside the module configuration. By default this is retrieved from the credentials path"
-
     credentials_path:
         type: str
         default: "/root/.spotinst/credentials"
         description: "Optional parameter that allows to set a non-default credentials path."
-
     state:
         type: str
         choices:
@@ -40,19 +37,16 @@ options:
             - absent
         default: present
         description: "create update or delete"
-
     account_id:
         type: str
         description:
             - "Optional parameter that allows to set an account-id inside the module configuration. By default this is retrieved from the credentials path"
-
     id:
         type: str
         description:
             - "The Stateful Node ID if it already exists and you want to update or delete it."
             - "This will have no effect unless the `uniqueness_by` field is set to ID."
             - "When this is set, and the `uniqueness_by` field is set, the node will either be updated or deleted, but not created."
-
     uniqueness_by:
         type: str
         choices:
@@ -61,15 +55,12 @@ options:
         description:
             - "If your Stateful Node names are not unique, you may use this feature to update or delete a specific node."
             - "Whenever this property is set, you must set a an `id` in order to update or delete a node, otherwise a node will be created."
-
-
     do_not_update:
         type: list
         elements: str
         description:
             - "A list of dotted paths to attributes that you don't wish to update during an update operation."
             - "Example: Specifying `compute.product` will make sure that this attribute is never updated."
-
     action:
         type: str
         choices:
@@ -78,7 +69,6 @@ options:
             - recycle
         description:
             - Perform the desired action on the azure stateful node. This has no effect on delete operations.
-
     stateful_node_config:
         type: dict
         description: "Various configurations related to the stateful node"
@@ -135,7 +125,6 @@ options:
                             should_terminate_vm:
                                 type: bool
                                 description: "Indicates whether to delete the stateful node's VM."
-
     stateful_node:
         type: dict
         description: "Describe the desired properties of the stateful node under this object."
@@ -212,7 +201,8 @@ options:
                 suboptions:
                     draining_timeout:
                         type: int
-                        description: "The time in seconds to allow the node be drained from incoming TCP connections and detached from LB before terminating it. Default: 120."
+                        description: "The time in seconds to allow the node be drained from incoming TCP connections and detached from LB before
+                          terminating it. Default: 120."
                     fallback_to_od:
                         type: bool
                         description: "In case of no spots available, stateful node will launch an On-demand instance instead"
@@ -223,7 +213,9 @@ options:
                     optimization_windows:
                         type: list
                         elements: str
-                        description: "When performAt is `timeWindow`: must specify a list of `timeWindows` with at least one time window Each string is in the format of - `ddd:hh:mm-ddd:hh:mm ddd` = day of week = Sun | Mon | Tue | Wed | Thu | Fri | Sat hh = hour 24 = 0 -23 mm = minute = 0 - 59"
+                        description: "When performAt is `timeWindow`: must specify a list of `timeWindows` with at least one time window Each string
+                          is in theformat of - `ddd:hh:mm-ddd:hh:mm ddd` = day of week = Sun | Mon | Tue | Wed | Thu | Fri | Sat hh = hour 24 = 0 - 23
+                            mm = minute = 0 - 59"
                     preferred_lifecycle:
                         type: str
                         description: "The preferred lifecycle to launch VM, valid values: `spot`, `od`. Default: `spot`"
@@ -293,7 +285,7 @@ options:
                                         type: str
                                         description: "Defines the storage type on VM launch in Azure. Valid Values: `managed`, `unmanaged`"
                             custom_data:
-                                type: string
+                                type: str
                                 description: "Defines the custom data (YAML encoded at Base64) that will be executed upon VM launch."
                             data_disks:
                                 type: list
@@ -401,7 +393,8 @@ options:
                                                 type: str
                                                 description:
                                                     - "if type is LoadBalancer then Valid Values are: `Standard`, `Basic`"
-                                                    - "if ApplicationGateway then Valid Values are: `Standard_Large`, `Standard_Medium`, `Standard_Small`, `Standard_v2`, `WAF_v2`, `WAF_Large`, `WAF_Medium`"
+                                                    - "if ApplicationGateway then Valid Values are: `Standard_Large`, `Standard_Medium`, `Standard_Small`,
+                                                      `Standard_v2`, `WAF_v2`, `WAF_Large`, `WAF_Medium`"
                                             name:
                                                 type: str
                                                 description: "Name of the Application Gateway/Load Balancer"
@@ -465,7 +458,8 @@ options:
                                                 type: list
                                                 elements: dict
                                                 description:
-                                                    - Defines the Application Security Groups that will be associated to the primary IP configration of the network interface.
+                                                    - Defines the Application Security Groups that will be associated to the primary IP configration
+                                                      of the network interface.
                                                 suboptions:
                                                     resource_group_name:
                                                         type: str
@@ -496,7 +490,7 @@ options:
                                                 type: list
                                                 elements: str
                                                 description: "Specify the private IP pool in which the VMs will be launched."
-                                            public_ips:                                            
+                                            public_ips:
                                                 type: list
                                                 elements: dict
                                                 description: "Specify the public IP pool in which the VMs will be launched."
@@ -554,7 +548,7 @@ options:
                                 description: "Defines the shutdown script (encoded at Base64) to execute once the VM is detached."
                             tags:
                                 description: "Defines the tags (unique key-value pairs) to tag your resources."
-                                type: list                                
+                                type: list
                                 elements: dict
                                 suboptions:
                                     tag_key:
@@ -597,7 +591,7 @@ EXAMPLES = """
             health_check_types: ["vmState"]
             auto_healing: true
             grace_period: 300
-            unhealthy_duration: 120           
+            unhealthy_duration: 120  
           strategy:
             draining_timeout: 300
             fallback_to_od: true
@@ -608,7 +602,7 @@ EXAMPLES = """
             os: "Linux"
             zones: ["1", "2"]
             preferred_zone: "2"
-            vm_sizes: 
+            vm_sizes:
               od_sizes: ["standard_a1_v2", "standard_a2_v2"]
               spot_sizes: ["standard_a1_v2", "standard_a2_v2"]
               preferred_spot_sizes: ["standard_a1_v2"]
@@ -649,7 +643,7 @@ EXAMPLES = """
 
 RETURN = """
 ---
-stateful_node_id: 
+stateful_node_id:
     description: The ID of the stateful node that was just created/update/deleted.
     returned: success
     type: str
@@ -672,7 +666,7 @@ except ImportError as e:
     pass
 
 try:
-    import spotinst_sdk2 as spotinst    
+    import spotinst_sdk2 as spotinst
     from spotinst_sdk2.client import SpotinstClientException
 
     HAS_SPOTINST_SDK = True
@@ -685,7 +679,7 @@ CLS_NAME_BY_ATTR_NAME = {
     "stateful_node.compute.launch_specification.load_balancers_config": "LoadBalancerConfig",
     "stateful_node.compute.launch_specification.network.network_interfaces": "NetworkInterface",
     "stateful_node.compute.launch_specification.data_disks": "DataDisk",
-    "stateful_node.compute.launch_specification.tags": "Tag",        
+    "stateful_node.compute.launch_specification.tags": "Tag",
     "stateful_node.strategy.signals": "Signal",
     "stateful_node.scheduling.tasks": "SchedulingTask"
 }
@@ -882,8 +876,7 @@ def handle_stateful_node(client, module):
     if operation == "create":
         has_changed, stateful_node_id, message = handle_create_stateful_node(client, stateful_node_module_copy)
     elif operation == "update":
-        has_changed, stateful_node_id, message = handle_update_stateful_node(client, stateful_node_module_copy,
-                                                                                   ssn_id, module)
+        has_changed, stateful_node_id, message = handle_update_stateful_node(client, stateful_node_module_copy, ssn_id, module)
     elif operation == "delete":
         has_changed, stateful_node_id, message = handle_delete_stateful_node(client, ssn_id, ssn_models, module)
     else:
@@ -924,7 +917,7 @@ def handle_update_stateful_node(client, stateful_node_module_copy, ssn_id, modul
     ami_sdk_object = turn_to_model(stateful_node_module_copy, "stateful_node")
 
     try:
-        res: dict = client.update_stateful_node(node_id = ssn_id, node_update=ami_sdk_object)
+        res: dict = client.update_stateful_node(node_id=ssn_id, node_update=ami_sdk_object)
         stateful_node_id = res["id"]
         message = "Stateful node updated successfully"
         has_changed = True
@@ -969,7 +962,7 @@ def handle_deletion_config(delete_args, ssn_models, module):
 
         if deletion_config is not None:
             deallocation_config = deletion_config.get("deallocation_config")
-            
+
             if deallocation_config is not None:
                 disk_deallocation_config = deallocation_config.get("disk_deallocation_config")
                 network_deallocation_config = deallocation_config.get("network_deallocation_config")
@@ -1003,17 +996,15 @@ def handle_deletion_config(delete_args, ssn_models, module):
 def attempt_stateful_action(action_type, client, stateful_node_id, message):
     try:
         if action_type == "pause":
-            client.update_stateful_node_state(node_id = stateful_node_id, state = "pause")
+            client.update_stateful_node_state(node_id=stateful_node_id, state="pause")
         if action_type == "resume":
-            client.update_stateful_node_state(node_id = stateful_node_id, state = "resume")
+            client.update_stateful_node_state(node_id=stateful_node_id, state="resume")
         if action_type == "recycle":
-            client.update_stateful_node_state(node_id = stateful_node_id, state = "recycle")
+            client.update_stateful_node_state(node_id=stateful_node_id, state="recycle")
 
         message = message + f" and action '{action_type}' started"
     except SpotinstClientException as exc:
-        message = (
-                message + f" but action '{action_type}' failed, error: {exc.message}"
-        )
+        message = message + f" but action '{action_type}' failed, error: {exc.message}"
     return message
 
 
@@ -1135,7 +1126,7 @@ def main():
         name=dict(type="str"),
         private_ip_address_version=dict(type="str"),
     )
-    
+
     security_group_fields = dict(
         name=dict(type="str"),
         resource_group_name=dict(type="str"),
@@ -1144,8 +1135,8 @@ def main():
     public_ip_fields = dict(
         name=dict(type="str"),
         resource_group_name=dict(type="str"),
-    )    
-    
+    )
+
     network_interface_fields = dict(
         additional_ip_configurations=dict(type="list", elements="dict", options=additional_ip_configuration_fields),
         application_security_groups=dict(type="list", elements="dict", options=security_group_fields),
@@ -1160,7 +1151,7 @@ def main():
     )
 
     network_fields = dict(
-        network_interfaces=dict(type="list", elements="dict", options=network_interface_fields),        
+        network_interfaces=dict(type="list", elements="dict", options=network_interface_fields),
         virtual_network_name=dict(type="str"),
         resource_group_name=dict(type="str"),
     )
@@ -1185,8 +1176,8 @@ def main():
         certificate_url=dict(type="list", elements="dict", options=vault_certificate_fields),
     )
 
-    tags_fields = dict(tag_key=dict(type="str"), tag_value=dict(type="str"))  
- 
+    tags_fields = dict(tag_key=dict(type="str"), tag_value=dict(type="str"))
+
     launch_spec_fields = dict(
         boot_diagnostics=dict(type="dict", options=boot_diagnostics_fields),
         custom_data=dict(type="str"),
@@ -1209,14 +1200,14 @@ def main():
     vm_sizes_fields = dict(
         od_sizes=dict(type="list", elements="str"),
         preferred_spot_sizes=dict(type="list", elements="str"),
-        spot_sizes=dict(type="list", elements="str"),                
-    )    
+        spot_sizes=dict(type="list", elements="str"),
+    )
 
     compute_fields = dict(
         launch_specification=dict(type="dict", options=launch_spec_fields),
         os=dict(type="str"),
-        preferred_zone=dict(type="str"), 
-        vm_sizes=dict(type="dict", options=vm_sizes_fields),       
+        preferred_zone=dict(type="str"),
+        vm_sizes=dict(type="dict", options=vm_sizes_fields),
         zones=dict(type="list", elements="str"),
     )
 
@@ -1236,12 +1227,12 @@ def main():
         should_deallocate=dict(type="bool"),
         ttl_in_hours=dict(type="int"),
     )
-    
+
     deallocation_config_fields = dict(
         disk_deallocation_config=dict(type="dict", options=deallocate_config),
         network_deallocation_config=dict(type="dict", options=deallocate_config),
         public_ip_deallocation_config=dict(type="dict", options=deallocate_config),
-        snapshot_deallocation_config=dict(type="dict", options=deallocate_config),                
+        snapshot_deallocation_config=dict(type="dict", options=deallocate_config),
         should_terminate_vm=dict(type="bool"),
     )
 
