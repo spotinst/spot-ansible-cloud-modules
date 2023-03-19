@@ -10,7 +10,7 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 module: azure_stateful_node
-version_added: 1.0.0
+version_added: 1.1.0
 short_description: Create, update or delete Spot Azure Stateful Nodes
 author: Spot by NetApp (@anuragsharma-123)
 description: >

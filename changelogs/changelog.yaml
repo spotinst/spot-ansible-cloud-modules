@@ -1,5 +1,15 @@
 ancestor: null
 releases:
+  1.1.0:
+    changes:
+      release_summary: New collection - adding all existing modules.
+    fragments:
+    - 1-1-0-summary.yml
+    modules:
+    - description: Create, update or delete Spot Azure Stateful Nodes
+      name: azure_stateful_node
+      namespace: ''
+    release_date: '2023-03-20'
   1.0.0:
     changes:
       release_summary: New collection - adding all existing modules.
