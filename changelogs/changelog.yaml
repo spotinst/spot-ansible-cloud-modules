@@ -2,7 +2,7 @@ ancestor: null
 releases:
   1.1.0:
     changes:
-      release_summary: New collection - adding all existing modules.
+      release_summary: Adding Azure Stateful Node support in spot.cloud_modules collection.
     fragments:
     - 1-1-0-summary.yml
     modules:

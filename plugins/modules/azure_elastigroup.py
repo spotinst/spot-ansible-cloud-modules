@@ -44,9 +44,9 @@ options:
     id:
         type: str
         description:
-            - "The Stateful Node ID if it already exists and you want to update or delete it."
+            - "Azure Elastigroup ID."
             - "This will have no effect unless the `uniqueness_by` field is set to ID."
-            - "When this is set, and the `uniqueness_by` field is set, the node will either be updated or deleted, but not created."
+            - "When this is set, and the `uniqueness_by` field is set, the group will either be updated or deleted, but not created."
     uniqueness_by:
         type: str
         choices:
@@ -54,80 +54,16 @@ options:
             - name
         description:
             - "If your Stateful Node names are not unique, you may use this feature to update or delete a specific node."
-            - "Whenever this property is set, you must set a an `id` in order to update or delete a node, otherwise a node will be created."
+            - "Whenever this property is set, you must set a an `id` in order to update or delete elastigroup, otherwise elastigroup node will be created."
     do_not_update:
         type: list
         elements: str
         description:
             - "A list of dotted paths to attributes that you don't wish to update during an update operation."
             - "Example: Specifying `compute.product` will make sure that this attribute is never updated."
-    action:
-        type: str
-        choices:
-            - pause
-            - resume
-            - recycle
-        description:
-            - Perform the desired action on the azure stateful node. This has no effect on delete operations.
-    stateful_node_config:
+    elastigroup:
         type: dict
-        description: "Various configurations related to the stateful node"
-        suboptions:
-            deletion_config:
-                type: dict
-                description: "Configurations related to the deletion of the stateful node"
-                suboptions:
-                    deallocation_config:
-                        type: dict
-                        description: "Deletion configuration for each stateful node's resources"
-                        suboptions:
-                            disk_deallocation_config:
-                                type: dict
-                                description: "Disk Deallocation Configuration."
-                                suboptions:
-                                    should_deallocate:
-                                        type: bool
-                                        description: "Indicates whether to delete the stateful node's disk resources."
-                                    ttl_in_hours:
-                                        type: int
-                                        description: "Hours to keep the resource alive before deletion. Default: 96"
-                            network_deallocation_config:
-                                type: dict
-                                description: "Network Deallocation Configuration."
-                                suboptions:
-                                    should_deallocate:
-                                        type: bool
-                                        description: "Indicates whether to delete the stateful node's network resources."
-                                    ttl_in_hours:
-                                        type: int
-                                        description: "Hours to keep the resource alive before deletion. Default: 96"
-                            public_ip_deallocation_config:
-                                type: dict
-                                description: "Public IP Deallocation Configuration."
-                                suboptions:
-                                    should_deallocate:
-                                        type: bool
-                                        description: "Indicates whether to delete the stateful node's public ip resources."
-                                    ttl_in_hours:
-                                        type: int
-                                        description: "Hours to keep the resource alive before deletion. Default: 96"
-                            snapshot_deallocation_config:
-                                type: dict
-                                description:
-                                    - Snapshot Deallocation Configuration.
-                                suboptions:
-                                    should_deallocate:
-                                        type: bool
-                                        description: "Indicates whether to delete the stateful node's snapshot resources."
-                                    ttl_in_hours:
-                                        type: int
-                                        description: "Hours to keep the resource alive before deletion. Default: 96"
-                            should_terminate_vm:
-                                type: bool
-                                description: "Indicates whether to delete the stateful node's VM."
-    stateful_node:
-        type: dict
-        description: "Describe the desired properties of the stateful node under this object."
+        description: "Describe the desired properties of the azure elastigroup under this object."
         suboptions:
             name:
                 type: str
@@ -141,13 +77,234 @@ options:
             description:
                 type: str
                 description: "optional description for the stateful node."
-            persistence:
+            capacity:
                 type: dict
-                description: Defines the persistence of the Stateful Node.
+                description: Capacity of Elastigroup.
                 suboptions:
-                    data_disks_persistence_mode:
+                    maximum:
+                        type: int
+                        description: "The Elastigroup will not set a target greater than this value"
+                    minimum:
+                        type: int
+                        description: "The Elastigroup will not set a target below this value"
+                    target:
+                        type: int
+                        description: "Current scale the Elastigroup will conform to"
+            health:
+                type: dict
+                description: "Set health check and auto-healing of unhealthy VMs."
+                suboptions:
+                    health_check_types:
                         type: str
-                        description: "Defines the persistency handling for data disks. valid values: `reattach`, `onLaunch`"
+                        description: "Health check types to use in order to validate VM health."
+                    auto_healing:
+                        type: bool
+                        description: "Enable auto-healing of unhealthy VMs."
+                    grace_period:
+                        type: int
+                        description: "The amount of time (in seconds) after a new VM has launched before terminating the old VM."
+                    unhealthy_duration:
+                        type: int
+                        description: "Amount of time (in seconds) for the VM to remain unhealthy before a replacement is triggered."
+            scheduling:
+                type: dict
+                description: "Define cron-based scheduled tasks."
+                suboptions:
+                    tasks:
+                        type: list
+                        elements: dict
+                        description: "A list of scheduling tasks."
+                        suboptions:
+                            type:
+                                type: str
+                                description: "Define cron-based scheduled tasks. valid values: `scale`, `scaleUp`, `scaleDown`
+                                `scaleUpPercentage`, `scaleDownPercentage` and `deployment`"
+                            cron_expression:
+                                type: str
+                                description: "A valid cron expression that describes the scheduled task (UTC)."
+                            is_enabled:
+                                type: bool
+                                description: "Describes whether the task is enabled. When true the task should run when false it should not run."
+                            start_time:
+                                type: str
+                                description: "Start Time."
+                            frequency:
+                                type: str
+                                description: "Frequency."                                
+                            scale_target_capacity:
+                                type: int
+                                description: "This will set the defined target group capacity when the scheduling task is triggered."
+                            scale_min_capacity:
+                                type: int
+                                description: "This will set the defined maximum group capacity when the scheduling task is triggered."
+                            scale_max_capacity:
+                                type: int
+                                description: "This will set the defined maximum group capacity when the scheduling task is triggered."            
+                            batch_size_percentage:
+                                type: int
+                                description: "Indicates the timeout (in seconds) to wait until the VM becomes healthy, based on the healthCheckType."
+                            grace_period:
+                                type: str
+                                description: "Indicates (in seconds) the timeout to wait until instance become healthy based on the healthCheckType."
+                            adjustment:
+                                type: str
+                                description: "This will decrease the target capacity by the defined amount when the scheduling task is triggered."                                
+                            adjustment_percentage:
+                                type: int
+                                description: "This will decrease the target capacity by the defined percentage value when the scheduling task is triggered."
+                            target_capacity:
+                                type: int
+                                description: "This will set the defined target group capacity when the scheduling task is triggered."
+                            min_capacity:
+                                type: int
+                                description: "This will set the defined maximum group capacity when the scheduling task is triggered." 
+                            max_capacity:
+                                type: int
+                                description: "This will set the defined maximum group capacity when the scheduling task is triggered."
+            scaling:
+                type: dict
+                description: "Scaling Policies for Elastigroup."
+                suboptions:
+                    down:
+                        type: list
+                        elements: dict
+                        description: "Defines scaling down policy."
+                        suboptions:
+                            action:
+                                type: dict
+                                description: "Scaling action to take when the policy is triggered."
+                                suboptions:
+                                    adjustment:
+                                        type: str
+                                        description: "Value to which the action type will be adjusted. Required if using `adjustment` action type."
+                                    maximum:
+                                        type: int
+                                        description: "Value to update the group maximum capacity to. Required if using `updateCapacity` as action type."
+                                    minimum:
+                                        type: int
+                                        description: "Value to update the group minimum capacity to. Required if using `updateCapacity` as action type."
+                                    target:
+                                        type: int
+                                        description: "Value to update the group target capacity to. Required if using `updateCapacity` as action type."
+                                    type:
+                                        type: str
+                                        description: "Type of scaling action to take when the scaling policy is triggered. 
+                                        valid values: `adjustment` and `updateCapacity`"
+                            cooldown:
+                                type: int
+                                description: "Time (seconds) to wait after a scaling action before resuming monitoring."
+                            dimensions:
+                                type: list
+                                elements: dict
+                                description: "Required if scaling.up.namespace is different from "Microsoft.Compute"."
+                                suboptions:
+                                    name:
+                                        type: str
+                                        description: "Dimension Name"
+                                    value:
+                                        type: str
+                                        description: "Dimension Value"
+                            evaluation_periods:
+                                type: int
+                                description: "Number of consecutive periods in which the threshold must be met in order to trigger the scaling action."
+                            metric_name:
+                                type: str
+                                description: "Metric to monitor by Azure metric display name"
+                            namespace:
+                                type: str
+                                description: "Namespace"
+                            operator:
+                                type: str
+                                description: "The operator used to evaluate the threshold against the current metric value. 
+                                valid values: `gt`, `gte`, `lt`, `lte`"
+                            period:
+                                type: int
+                                description: "Amount of time (seconds) for which the threshold must be met in order to trigger the scaling action. 
+                                valid values: 60, 300, 900, 1800, 3600, 7200"
+                            policy_name:
+                                type: str
+                                description: "Name of scaling policy." 
+                            statistic:
+                                type: str
+                                description: "Statistic by which to evaluate the selected metric.
+                                valid values: `average`, `total`, `minimum`, `maximum`, `count`"                               
+                            threshold:
+                                type: float
+                                description: "The value at which the scaling action is triggered."
+                            unit:
+                                type: str
+                                description: "Unit to measure to evaluate the selected metric."
+                    up:
+                        type: list
+                        elements: dict
+                        description: "Defines scaling up policy."
+                        suboptions:
+                            action:
+                                type: dict
+                                description: "Scaling action to take when the policy is triggered."
+                                suboptions:
+                                    adjustment:
+                                        type: str
+                                        description: "Value to which the action type will be adjusted. Required if using `adjustment` action type."
+                                    maximum:
+                                        type: int
+                                        description: "Value to update the group maximum capacity to. Required if using `updateCapacity` as action type."
+                                    minimum:
+                                        type: int
+                                        description: "Value to update the group minimum capacity to. Required if using `updateCapacity` as action type."
+                                    target:
+                                        type: int
+                                        description: "Value to update the group target capacity to. Required if using `updateCapacity` as action type."
+                                    type:
+                                        type: str
+                                        description: "Type of scaling action to take when the scaling policy is triggered. 
+                                        valid values: `adjustment` and `updateCapacity`"
+                            cooldown:
+                                type: int
+                                description: "Time (seconds) to wait after a scaling action before resuming monitoring."
+                            dimensions:
+                                type: list
+                                elements: dict
+                                description: "Required if scaling.up.namespace is different from "Microsoft.Compute"."
+                                suboptions:
+                                    name:
+                                        type: str
+                                        description: "Dimension Name"
+                                    value:
+                                        type: str
+                                        description: "Dimension Value"
+                            evaluation_periods:
+                                type: int
+                                description: "Number of consecutive periods in which the threshold must be met in order to trigger the scaling action."
+                            metric_name:
+                                type: str
+                                description: "Metric to monitor by Azure metric display name"
+                            namespace:
+                                type: str
+                                description: "Namespace"
+                            operator:
+                                type: str
+                                description: "The operator used to evaluate the threshold against the current metric value. 
+                                valid values: `gt`, `gte`, `lt`, `lte`"
+                            period:
+                                type: int
+                                description: "Amount of time (seconds) for which the threshold must be met in order to trigger the scaling action. 
+                                valid values: 60, 300, 900, 1800, 3600, 7200"
+                            policy_name:
+                                type: str
+                                description: "Name of scaling policy." 
+                            statistic:
+                                type: str
+                                description: "Statistic by which to evaluate the selected metric.
+                                valid values: `average`, `total`, `minimum`, `maximum`, `count`"                               
+                            threshold:
+                                type: float
+                                description: "The value at which the scaling action is triggered."
+                            unit:
+                                type: str
+                                description: "Unit to measure to evaluate the selected metric."
+
+                        description: "Defines "the persistency handling for data disks. valid values: `reattach`, `onLaunch`"
                     os_disk_persistence_mode:
                         type: str
                         description: "Defines the persistency handling for os disk. valid values: `reattach`, `onLaunch`"
@@ -159,73 +316,37 @@ options:
                         description: "Enables the network persistency."
                     should_persist_os_disk:
                         type: bool
-                        description: "Enables the OS disk persistency."
-            health:
-                type: dict
-                description: "Set health check and auto-healing of unhealthy VMs."
-                suboptions:
-                    health_check_types:
-                        type: list
-                        elements: str
-                        description: "Health check types to use in order to validate VM health."
-                    auto_healing:
-                        type: bool
-                        description: "Auto healing replaces the instance automatically in case the health check fails"
-                    grace_period:
-                        type: int
-                        description: "The amount of time (in seconds) after a new VM has launched before terminating the old VM."
-                    unhealthy_duration:
-                        type: int
-                        description: "Amount of time (in seconds) for the VM to remain unhealthy before a replacement is triggered."
-            scheduling:
-                type: dict
-                description: "Scheduling settings for stateful node"
-                suboptions:
-                    tasks:
-                        type: list
-                        elements: dict
-                        description: "Scheduled tasks to excute for the stateful node"
-                        suboptions:
-                            type:
-                                type: str
-                                description: "The type of scheduled task. valid values: `pause`, `resume`, `recycle`"
-                            cron_expression:
-                                type: str
-                                description: "A valid cron expression that describes the scheduled task (UTC)."
-                            is_enabled:
-                                type: bool
-                                description: "Describes whether the task is enabled. When true the task should run when false it should not run."
+                        description: "Enables the OS disk persistency."            
             strategy:
                 type: dict
-                description: "The strategy to launch the underlying VM and Spot behavior for the Stateful Node."
+                description: "Strategy for Elastigroup."
                 suboptions:
                     draining_timeout:
                         type: int
-                        description: "The time in seconds to allow the node be drained from incoming TCP connections and detached from LB before
-                          terminating it. Default: 120."
+                        description: "Time (seconds) to allow the VM be drained from incoming TCP connections and detached from MLB before 
+                        terminating it during a scale down operation. Default: 120."
                     fallback_to_od:
                         type: bool
-                        description: "In case of no spots available, stateful node will launch an On-demand instance instead"
-                    od_windows:
-                        type: list
-                        elements: str
-                        description: "Define the time windows in which the underlying VM will be set as an on-demand lifecycle type."
+                        description: "In case of no spots available, elastigroup will launch an On-demand instance instead"
+                    on_demand_count:
+                        type: int
+                        description: "Percentage of Spot-VMs to maintain. Required if spotPercentage isn't specified."
                     optimization_windows:
                         type: list
                         elements: str
                         description: "When performAt is `timeWindow`: must specify a list of `timeWindows` with at least one time window Each string
                           is in theformat of - `ddd:hh:mm-ddd:hh:mm ddd` = day of week = Sun | Mon | Tue | Wed | Thu | Fri | Sat hh = hour 24 = 0 - 23
                             mm = minute = 0 - 59"
-                    preferred_lifecycle:
+                    orientation:
                         type: str
-                        description: "The preferred lifecycle to launch VM, valid values: `spot`, `od`. Default: `spot`"
+                        description: "Specify the prediction algorithm strategy. valid values: `availability`, `cost`, `cheapest`"
                     revert_to_spot:
                         type: dict
                         description: "Hold settings for strategy correction - replacing On-Demand for Spot VMs."
                         suboptions:
                             perform_at:
                                 type: str
-                                description: "Valid values: `always`, `never`, `timeWindow`. Default: `always`"
+                                description: "Settings for maintenance strategy. valid values: `always`, `never`, `timeWindow`. Default: `always`"
                     signals:
                         type: list
                         elements: dict
@@ -237,6 +358,9 @@ options:
                             type:
                                 type: str
                                 description: "The defined type of signal. Valid values: `vmReady`, `vmReadyToShutdown`"
+                    spot_percentage:
+                        type: int
+                        description: "Percentage of Spot-VMs to maintain. Required if `od_count` isn't specified. default: 100"
             compute:
                 type: dict
                 description: "Defines the computational parameters to use when launch the VM for the Stateful Node."
@@ -248,12 +372,13 @@ options:
                         type: list
                         elements: str
                         description: "List of Azure Availability Zones in the defined region. Valid Values: `1`, `2`, `3`"
-                    preferred_zone:
-                        type: str
-                        description: "The AZ to prioritize when launching VMs. Valid Values: `1`, `2`, `3`"
+                    preferred_zones:
+                        type: list
+                        elements: str
+                        description: "The AZs to prioritize when launching VMs. Must be a sublist of compute.zones"
                     vm_sizes:
                         type: dict
-                        description: "Defines the VM sizes to use when launching VMs."
+                        description: "Sizes of On-Demand and Low-Priority VMs."
                         suboptions:
                             od_sizes:
                                 type: list
@@ -266,7 +391,7 @@ options:
                             preferred_spot_sizes:
                                 type: list
                                 elements: str
-                                description: "Prioritize Spot VM sizes when launching Spot VMs."
+                                description: "Prioritize Spot VM sizes when launching Spot VMs. Must be a sublist of compute.vmSizes.spotSizes."
                     launch_specification:
                         type: dict
                         description: "Defines the launch specification of the VM."
@@ -286,11 +411,11 @@ options:
                                         description: "Defines the storage type on VM launch in Azure. Valid Values: `managed`, `unmanaged`"
                             custom_data:
                                 type: str
-                                description: "Defines the custom data (YAML encoded at Base64) that will be executed upon VM launch."
+                                description: "This value will hold the YML in base64 and will be added to the scaleSets."
                             data_disks:
                                 type: list
                                 elements: dict
-                                description: "The definitions of data disks that will be created and attached to the stateful node's VM."
+                                description: "List of data disks to be attached to the vms in the group."
                                 suboptions:
                                     lun:
                                         type: str
@@ -309,9 +434,12 @@ options:
                                     api_version:
                                         type: str
                                         description: "The API version of the extension. Required if extension specified."
-                                    minor_version_auto_upgrade:
+                                    auto_upgrade_minor_version:
                                         type: bool
                                         description: "Required on compute.launchSpecification.extensions object"
+                                    minor_version_auto_upgrade:
+                                        type: bool
+                                        description: "Enable minor version upgrades of the extension. Required if extension specified."
                                     name:
                                         type: str
                                         description: "Required on compute.launchSpecification.extensions object"
@@ -351,7 +479,7 @@ options:
                                             spot_account_id:
                                                 type: str
                                                 description: "The Spot account ID that connected to the Azure subscription to which the gallery belongs."
-                                            version_name:
+                                            version:
                                                 type: str
                                                 description: "Image's version. Can be in the format x.x.x or 'latest'."
                                     marketplace:
@@ -370,12 +498,6 @@ options:
                                             version:
                                                 type: str
                                                 description: "Image Version. Default: `latest`"
-                            licence_type:
-                                type: str
-                                description:
-                                    - "Specify an existing Azure license type to use when launching new VMs."
-                                    - "Valid values for Windows OS: `Windows_Server`, `Windows_Client`"
-                                    - "Valid values for Linux OS: `RHEL_BYOS`, `SLES_BYOS`"
                             load_balancers_config:
                                 type: dict
                                 description: "Configure a Load Balancer."
@@ -385,56 +507,61 @@ options:
                                         elements: dict
                                         description: "Add a load balancer. For Azure Gateway, each Backend Pool is a separate load balancer."
                                         suboptions:
-                                            backend_pool_names:
-                                                type: list
-                                                elements: str
-                                                description: "Name of the Backend Pool to register the Stateful Node VMs to."
-                                            load_balancer_sku:
+                                            application_gateway_name:
                                                 type: str
-                                                description:
-                                                    - "if type is LoadBalancer then Valid Values are: `Standard`, `Basic`"
-                                                    - "if ApplicationGateway then Valid Values are: `Standard_Large`, `Standard_Medium`, `Standard_Small`,
-                                                      `Standard_v2`, `WAF_v2`, `WAF_Large`, `WAF_Medium`"
-                                            name:
+                                                description: "Application Gateway Name"
+                                            backend_pool_name:
                                                 type: str
-                                                description: "Name of the Application Gateway/Load Balancer"
+                                                description: "Name of the Backend Pool to register the group to."
                                             resource_group_name:
                                                 type: str
                                                 description: "The Resource Group name of the Load Balancer."
                                             type:
                                                 type: str
                                                 description: "The type of load balancer. Valid Values: `loadBalancer`, `applicationGateway`"
+                                            auto_weight:
+                                                type: boolean
+                                                description:
+                                                    - "auto weight"
+                                            balancer_id:
+                                                type: boolean
+                                                description:
+                                                    - "ID of Load Balancer"
+                                            target_set_id:
+                                                type: boolean
+                                                description:
+                                                    - "Target Set ID"
                             login:
                                 type: dict
                                 description: "Specify the authentication details to be used for launching VMs."
                                 suboptions:
                                     password:
                                         type: str
-                                        description: "Defines the password for admin access to Windows VMs."
+                                        description: "Password for admin access to Windows VMs."
                                     ssh_public_key:
                                         type: str
-                                        description: "Defines the SSH public key for admin access to Linux VMs."
+                                        description: "SSH for admin access to Linux VMs."
                                     user_name:
                                         type: str
                                         description: "Defines the admin user name for launching VMs."
                             managed_service_identities:
                                 type: list
                                 elements: dict
-                                description: "Defines a user-assigned managed identity to the launched VMs."
+                                description: "Add a user-assigned managed identity to the VMs in the cluster."
                                 suboptions:
                                     resource_group_name:
                                         type: str
-                                        description: "Defines the resource group of the managed service identities."
+                                        description: "The Resource Group that the user-assigned managed identity resides in."
                                     name:
                                         type: str
-                                        description: "Defines the name of the managed service identities."
+                                        description: "Name of the managed identity."
                             network:
                                 type: dict
-                                description: "Defines the network profile with which the VM will be launched."
+                                description: "Define the Virtual Network and Subnet for your Elastigroup."
                                 suboptions:
                                     resource_group_name:
                                         type: str
-                                        description: "Defines the resource group name of the virtual network with which the VM will be launched."
+                                        description: "Defines the resource group name of the virtual network with which the VMs will be launched."
                                     virtual_network_name:
                                         type: str
                                         description: "Defines the name of the virtual network with which the VM will be launched."
@@ -476,16 +603,16 @@ options:
                                             is_primary:
                                                 type: bool
                                                 description: "Defines whether the network interface is primary or not."
-                                            network_security_group:
+                                            security_group:
                                                 type: dict
                                                 description: "Defines the network security group to which the network interface will be assigned."
                                                 suboptions:
                                                     resource_group_name:
                                                         type: str
-                                                        description: "Specify the resource group of the network security group."
+                                                        description: "Specify the resource group of the security group."
                                                     name:
                                                         type: str
-                                                        description: "Specify the name of the network security group to use in this network interface."
+                                                        description: "Specify the name of the security group to use in this network interface."
                                             private_ip_addresses:
                                                 type: list
                                                 elements: str
@@ -493,7 +620,7 @@ options:
                                             public_ips:
                                                 type: list
                                                 elements: dict
-                                                description: "Specify the public IP pool in which the VMs will be launched."
+                                                description: "Defined a pool of Public Ips (from Azure), that will be associated to the network interface."
                                                 suboptions:
                                                     resource_group_name:
                                                         type: str
@@ -503,7 +630,7 @@ options:
                                                         description: "Specify the name of the public IP to which the VMs will be assigned."
                                             public_ip_sku:
                                                 type: str
-                                                description: "Defines the type of public IP to assign the VM. Valid Values: `Standard`, `Basic`"
+                                                description: "Defines the type of public IP to assign the VM. Required if assignPublicIp=true. Valid Values: `Standard`, `Basic`"
                                             subnet_name:
                                                 type: str
                                                 description: "Defines the subnet to which the network interface will be connected."
