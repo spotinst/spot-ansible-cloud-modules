@@ -1079,7 +1079,7 @@ def main():
         version=dict(type="str"),
     )
 
-    custom_image_fields = dict(
+    gallery_image_fields = dict(
         gallery_name=dict(type="str"),
         image_name=dict(type="str"),
         resource_group_name=dict(type="str"),
@@ -1087,7 +1087,7 @@ def main():
         version_name=dict(type="str"),
     )
 
-    gallery_image_fields = dict(
+    custom_image_fields = dict(
         resource_group_name=dict(type="str"),
         name=dict(type="str"),
     )
