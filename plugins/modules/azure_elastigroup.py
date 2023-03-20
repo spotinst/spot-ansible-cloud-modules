@@ -302,21 +302,7 @@ options:
                                 description: "The value at which the scaling action is triggered."
                             unit:
                                 type: str
-                                description: "Unit to measure to evaluate the selected metric."
-
-                        description: "Defines "the persistency handling for data disks. valid values: `reattach`, `onLaunch`"
-                    os_disk_persistence_mode:
-                        type: str
-                        description: "Defines the persistency handling for os disk. valid values: `reattach`, `onLaunch`"
-                    should_persist_data_disks:
-                        type: bool
-                        description: "Enables the data disks persistency."
-                    should_persist_network:
-                        type: bool
-                        description: "Enables the network persistency."
-                    should_persist_os_disk:
-                        type: bool
-                        description: "Enables the OS disk persistency."            
+                                description: "Unit to measure to evaluate the selected metric."         
             strategy:
                 type: dict
                 description: "Strategy for Elastigroup."
@@ -638,7 +624,7 @@ options:
                                 type: dict
                                 description: "Specify OS disk specification other than default."
                                 suboptions:
-                                    size_g_b:
+                                    size:
                                         type: int
                                         description: "The size of the OS disk in GB."
                                     type:
@@ -672,7 +658,7 @@ options:
                                                 description: "The URL of the certificate under the key vault"
                             shutdown_script:
                                 type: str
-                                description: "Defines the shutdown script (encoded at Base64) to execute once the VM is detached."
+                                description: "Shutdown script for the group. Value should be passed as a string encoded at Base64 only."
                             tags:
                                 description: "Defines the tags (unique key-value pairs) to tag your resources."
                                 type: list
@@ -680,13 +666,10 @@ options:
                                 suboptions:
                                     tag_key:
                                         type: str
-                                        description: "Tag key for all resources."
+                                        description: "Tag Key for Vms in Elastigroup."
                                     tag_value:
                                         type: str
-                                        description: "Tag value for all resources."
-                            vm_name:
-                                type: str
-                                description: "Set a VM name that will be persisted throughout the entire node lifecycle."
+                                        description: "Tag Value for VMs in Elastigroup."
                             vm_name_prefix:
                                 type: str
                                 description: "Set a VM name prefix to be used for all launched VMs and the VM resources."
@@ -803,16 +786,22 @@ except ImportError as e:
 
 
 CLS_NAME_BY_ATTR_NAME = {
-    "stateful_node.compute.launch_specification.load_balancers_config": "LoadBalancerConfig",
-    "stateful_node.compute.launch_specification.network.network_interfaces": "NetworkInterface",
-    "stateful_node.compute.launch_specification.data_disks": "DataDisk",
-    "stateful_node.compute.launch_specification.tags": "Tag",
-    "stateful_node.strategy.signals": "Signal",
-    "stateful_node.scheduling.tasks": "SchedulingTask"
+    "elastigroup.scheduling.tasks": "SchedulingTask",
+    "elastigroup.scaling.up": "ScalingPolicy",
+    "elastigroup.scaling.down": "ScalingPolicy",
+    "elastigroup.strategy.signals": "Signal",
+    "elastigroup.compute.launch_specification.load_balancers_config": "LoadBalancerConfig",
+    "elastigroup.compute.launch_specification.network.network_interfaces": "NetworkInterface",
+    "elastigroup.compute.launch_specification.data_disks": "DataDisk",
+    "elastigroup.compute.launch_specification.tags": "Tag",
 }
 
 LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
-    "stateful_node.compute.launch_specification.load_balancers_config.load_balancers": "LoadBalancer",
+    "elastigroup.scaling.up.action": "ScalingPolicyAction",
+    "elastigroup.scaling.down.action": "ScalingPolicyAction",
+    "elastigroup.scaling.up.dimensions": "ScalingPolicyDimension",
+    "elastigroup.scaling.down.dimensions": "ScalingPolicyDimension",
+    "elastigroup.compute.launch_specification.load_balancers_config.load_balancers": "LoadBalancer",
 }
 
 
@@ -866,7 +855,7 @@ def get_client(module):
     else:
         session = spotinst.SpotinstSession(auth_token=token)
 
-    client = session.client("stateful_node_azure")
+    client = session.client("elastigroup_azure")
 
     return client
 
@@ -904,25 +893,25 @@ def turn_to_model(content, field_name: str, curr_path=None):
         return instance
 
 
-def find_ssn_with_same_name(stateful_nodes, name):
+def find_group_id_with_same_name(groups, name):
     ret_val = []
-    for node in stateful_nodes:
-        if node["name"] == name:
-            ret_val.append(node)
+    for group in groups:
+        if group["name"] == name:
+            ret_val.append(group)
 
     return ret_val
 
 
 def clean_do_not_update_fields(
-        stateful_node_module_copy: dict, do_not_update_list: list
+        elastigroup_module_copy: dict, do_not_update_list: list
 ):
-    ret_val = stateful_node_module_copy
+    ret_val = elastigroup_module_copy
 
     # avoid deleting parent dicts before children
     do_not_update_list = sorted(do_not_update_list, key=len, reverse=True)
 
     for dotted_path in do_not_update_list:
-        curr_dict = stateful_node_module_copy
+        curr_dict = elastigroup_module_copy
         path_as_list = dotted_path.split(".")
         last_part_of_path = path_as_list[-1]
 
@@ -939,52 +928,52 @@ def clean_do_not_update_fields(
 def get_id_and_operation(client, state: str, module):
     operation, id = None, None
     uniqueness_by = module.custom_params.get("uniqueness_by")
-    manually_provided_ssn_id = module.custom_params.get("id")
-    stateful_node = module.custom_params.get("stateful_node")
+    manually_provided_group_id = module.custom_params.get("id")
+    group = module.custom_params.get("elastigroup")
 
     if state == "present":
 
         if uniqueness_by == "id":
-            if manually_provided_ssn_id is None:
+            if manually_provided_group_id is None:
                 operation = "create"
             else:
-                id = manually_provided_ssn_id
+                id = manually_provided_group_id
                 operation = "update"
         else:
-            all_stateful_nodes = client.get_all_stateful_nodes()
-            name = stateful_node["name"]
-            nodes_with_name = find_ssn_with_same_name(all_stateful_nodes, name)
+            all_groups = client.get_elastigroups()
+            name = group["name"]
+            groups_with_name = find_group_id_with_same_name(all_groups, name)
 
-            if len(nodes_with_name) == 0:
+            if len(groups_with_name) == 0:
                 operation = "create"
-            elif len(nodes_with_name) == 1:
-                id = nodes_with_name[0]["id"]
+            elif len(groups_with_name) == 1:
+                id = groups_with_name[0]["id"]
                 operation = "update"
             else:
-                msg = f"Failed updating stateful node - 'uniqueness_by' is set to 'name' but there's more than one stateful node with the name '{name}'"
+                msg = f"Failed updating elastigroup - 'uniqueness_by' is set to 'name' but there's more than one group with the name '{name}'"
                 module.fail_json(changed=False, msg=msg)
 
     elif state == "absent":
         operation = "delete"
 
         if uniqueness_by == "id":
-            if manually_provided_ssn_id is not None:
+            if manually_provided_group_id is not None:
                 id = module.custom_params.get("id")
             else:
-                msg = "Failed deleting stateful node - 'uniqueness_by' is set to `id` but parameter 'id' was not provided"
+                msg = "Failed deleting elastigroup - 'uniqueness_by' is set to `id` but parameter 'id' was not provided"
                 module.fail_json(changed=False, msg=msg)
         else:
-            all_stateful_nodes = client.get_all_stateful_nodes()
-            name = stateful_node["name"]
-            nodes_with_name = find_ssn_with_same_name(all_stateful_nodes, name)
+            all_groups = client.get_elastigroups()
+            name = group["name"]
+            groups_with_name = find_group_id_with_same_name(all_groups, name)
 
-            if len(nodes_with_name) == 1:
-                id = nodes_with_name[0]["id"]
-            if len(nodes_with_name) > 1:
-                msg = f"Failed deleting stateful node - 'uniqueness_by' is set to 'name' but there's more than one stateful node with the name '{name}'"
+            if len(groups_with_name) == 1:
+                id = groups_with_name[0]["id"]
+            if len(groups_with_name) > 1:
+                msg = f"Failed deleting elastigroup - 'uniqueness_by' is set to 'name' but there's more than one elastigroup with the name '{name}'"
                 module.fail_json(changed=False, msg=msg)
-            if len(nodes_with_name) == 0:
-                msg = f"Failed deleting stateful node - 'uniqueness_by' is set to 'name' but there is no stateful node with the name '{name}'"
+            if len(groups_with_name) == 0:
+                msg = f"Failed deleting elastigroup - 'uniqueness_by' is set to 'name' but there is no elastigroup with the name '{name}'"
                 module.fail_json(changed=False, msg=msg)
 
     else:
@@ -993,17 +982,17 @@ def get_id_and_operation(client, state: str, module):
     return operation, id
 
 
-def handle_stateful_node(client, module):
+def handle_(client, module):
     ssn_models = spotinst.models.stateful_node
-    stateful_node_module_copy = copy.deepcopy(module.custom_params.get("stateful_node"))
+    elastigroup_module_copy = copy.deepcopy(module.custom_params.get("stateful_node"))
     state = module.custom_params.get("state")
 
     operation, ssn_id = get_id_and_operation(client, state, module)
 
     if operation == "create":
-        has_changed, stateful_node_id, message = handle_create_stateful_node(client, stateful_node_module_copy)
+        has_changed, stateful_node_id, message = handle_create_stateful_node(client, elastigroup_module_copy)
     elif operation == "update":
-        has_changed, stateful_node_id, message = handle_update_stateful_node(client, stateful_node_module_copy, ssn_id, module)
+        has_changed, stateful_node_id, message = handle_update_stateful_node(client, elastigroup_module_copy, ssn_id, module)
     elif operation == "delete":
         has_changed, stateful_node_id, message = handle_delete_stateful_node(client, ssn_id, ssn_models, module)
     else:
@@ -1036,12 +1025,12 @@ def handle_delete_stateful_node(client, ssn_id, ssn_models, module):
     return has_changed, stateful_node_id, message
 
 
-def handle_update_stateful_node(client, stateful_node_module_copy, ssn_id, module):
-    stateful_node_module_copy = clean_do_not_update_fields(
-        stateful_node_module_copy,
+def handle_update_stateful_node(client, elastigroup_module_copy, ssn_id, module):
+    elastigroup_module_copy = clean_do_not_update_fields(
+        elastigroup_module_copy,
         module.custom_params.get("do_not_update")
     )
-    ami_sdk_object = turn_to_model(stateful_node_module_copy, "stateful_node")
+    ami_sdk_object = turn_to_model(elastigroup_module_copy, "stateful_node")
 
     try:
         res: dict = client.update_stateful_node(node_id=ssn_id, node_update=ami_sdk_object)
@@ -1069,9 +1058,9 @@ def handle_update_stateful_node(client, stateful_node_module_copy, ssn_id, modul
     return has_changed, stateful_node_id, message
 
 
-def handle_create_stateful_node(client, stateful_node_module_copy):
+def handle_create_stateful_node(client, elastigroup_module_copy):
     ami_sdk_object = turn_to_model(
-        stateful_node_module_copy, "stateful_node"
+        elastigroup_module_copy, "stateful_node"
     )
 
     res: dict = client.create_stateful_node(node=ami_sdk_object)
@@ -1136,25 +1125,29 @@ def attempt_stateful_action(action_type, client, stateful_node_id, message):
 
 
 def main():
-    persistence_fields = dict(
-        data_disks_persistence_mode=dict(type="str"),
-        os_disk_persistence_mode=dict(type="str"),
-        should_persist_data_disks=dict(type="bool"),
-        should_persist_network=dict(type="bool"),
-        should_persist_os_disk=dict(type="bool"),
-    )
-
     health_fields = dict(
-        health_check_types=dict(type="list", elements="str"),
+        health_check_types=dict(type="str"),
         auto_healing=dict(type="bool"),
         grace_period=dict(type="int"),
         unhealthy_duration=dict(type="int"),
     )
 
     task_fields = dict(
-        type=dict(type="str"),
-        cron_expression=dict(type="str"),
         is_enabled=dict(type="bool"),
+        frequency=dict(type="str"),        
+        start_time=dict(type="str"),
+        cron_expression=dict(type="str"),
+        type=dict(type="str"),
+        scale_target_capacity=dict(type="int"),
+        scale_min_capacity=dict(type="int"),
+        scale_max_capacity=dict(type="int"),
+        batch_size_percentage=dict(type="int"),
+        grace_period=dict(type="int"),
+        adjustment=dict(type="int"),
+        adjustment_percentage=dict(type="int"),
+        target_capacity=dict(type="int"),
+        min_capacity=dict(type="int"),
+        max_capacity=dict(type="int"),
     )
 
     scheduling_fields = dict(
@@ -1170,13 +1163,13 @@ def main():
 
     strategy_fields = dict(
         draining_timeout=dict(type="int"),
-        fallback_to_od=dict(type="bool"),
-        od_windows=dict(type="list", elements="str"),
+        on_demand_count=dict(type="int"),
         optimization_windows=dict(type="list", elements="str"),
-        preferred_lifecycle=dict(type="str"),
+        orientation=dict(type="str"),
         revert_to_spot=dict(type="dict", options=revert_to_spot_fields),
         signals=dict(type="list", elements="dict", options=signal_fields),
-
+        spot_percentage=dict(type="int"),
+        fallback_to_od=dict(type="bool"),
     )
 
     boot_diagnostics_fields = dict(
@@ -1193,6 +1186,7 @@ def main():
 
     extension_fields = dict(
         api_version=dict(type="str"),
+        auto_upgrade_minor_version=dict(type="bool"),
         minor_version_auto_upgrade=dict(type="bool"),
         name=dict(type="str"),
         publisher=dict(type="str"),
@@ -1206,15 +1200,15 @@ def main():
         version=dict(type="str"),
     )
 
-    custom_image_fields = dict(
+    gallery_image_fields = dict(
         gallery_name=dict(type="str"),
         image_name=dict(type="str"),
         resource_group_name=dict(type="str"),
         spot_account_id=dict(type="str"),
-        version_name=dict(type="str"),
+        version=dict(type="str"),
     )
 
-    gallery_image_fields = dict(
+    custom_image_fields = dict(
         resource_group_name=dict(type="str"),
         name=dict(type="str"),
     )
