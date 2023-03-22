@@ -677,8 +677,12 @@ except ImportError as e:
 
 CLS_NAME_BY_ATTR_NAME = {
     "stateful_node.compute.launch_specification.load_balancers_config": "LoadBalancerConfig",
+    "stateful_node.compute.launch_specification.managed_service_identities": "ManagedServiceIdentity",
+    "stateful_node.compute.launch_specification.extension": "Extension",
     "stateful_node.compute.launch_specification.network.network_interfaces": "NetworkInterface",
     "stateful_node.compute.launch_specification.data_disks": "DataDisk",
+    "stateful_node.compute.launch_specification.extensions": "Extension",
+    "stateful_node.compute.launch_specification.secrets": "Secret",
     "stateful_node.compute.launch_specification.tags": "Tag",
     "stateful_node.strategy.signals": "Signal",
     "stateful_node.scheduling.tasks": "SchedulingTask"
@@ -686,6 +690,9 @@ CLS_NAME_BY_ATTR_NAME = {
 
 LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
     "stateful_node.compute.launch_specification.load_balancers_config.load_balancers": "LoadBalancer",
+    "stateful_node.compute.launch_specification.network.network_interfaces.application_security_groups": "ApplicationSecurityGroup",
+    "stateful_node.compute.launch_specification.network.network_interfaces.additional_ip_configurations": "AdditionalIpConfiguration",
+    "stateful_node.compute.launch_specification.secrets.vault_certificates": "VaultCertificate"
 }
 
 
@@ -1009,6 +1016,8 @@ def attempt_stateful_action(action_type, client, stateful_node_id, message):
 
 
 def main():
+    global HAS_ANSIBLE_MODULE
+
     persistence_fields = dict(
         data_disks_persistence_mode=dict(type="str"),
         os_disk_persistence_mode=dict(type="str"),
@@ -1079,7 +1088,7 @@ def main():
         version=dict(type="str"),
     )
 
-    custom_image_fields = dict(
+    gallery_image_fields = dict(
         gallery_name=dict(type="str"),
         image_name=dict(type="str"),
         resource_group_name=dict(type="str"),
@@ -1087,7 +1096,7 @@ def main():
         version_name=dict(type="str"),
     )
 
-    gallery_image_fields = dict(
+    custom_image_fields = dict(
         resource_group_name=dict(type="str"),
         name=dict(type="str"),
     )
@@ -1172,7 +1181,7 @@ def main():
 
     secret_fields = dict(
         source_vault=dict(type="dict", options=source_vault_fields),
-        certificate_url=dict(type="list", elements="dict", options=vault_certificate_fields),
+        vault_certificates=dict(type="list", elements="dict", options=vault_certificate_fields),
     )
 
     tags_fields = dict(tag_key=dict(type="str"), tag_value=dict(type="str"))
