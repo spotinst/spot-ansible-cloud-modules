@@ -1016,6 +1016,8 @@ def attempt_stateful_action(action_type, client, stateful_node_id, message):
 
 
 def main():
+    global HAS_ANSIBLE_MODULE
+
     persistence_fields = dict(
         data_disks_persistence_mode=dict(type="str"),
         os_disk_persistence_mode=dict(type="str"),
