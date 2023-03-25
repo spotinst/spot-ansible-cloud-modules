@@ -133,7 +133,7 @@ options:
                                 description: "Start Time."
                             frequency:
                                 type: str
-                                description: "Frequency."                            
+                                description: "Frequency."
                             scale_target_capacity:
                                 type: int
                                 description: "This will set the defined target group capacity when the scheduling task is triggered."

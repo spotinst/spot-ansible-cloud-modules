@@ -1,1 +1,1 @@
-spotinst_sdk2>=2.1.29
+spotinst_sdk2>=2.1.30
