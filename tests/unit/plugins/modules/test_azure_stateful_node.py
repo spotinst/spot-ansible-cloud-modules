@@ -56,98 +56,98 @@ class TestTurnToModel(unittest.TestCase):
                 'grace_period': 300,
                 'unhealthy_duration': 120,
                 'auto_healing': True
-	        },
-	        'scheduling': {
-		        'tasks': [{
-			        'is_enabled': True,
-			        'cron_expression': '* * * 1 *',
-			        'type': 'pause'
-		        },
+            },
+            'scheduling': {
+                'tasks': [{
+                    'is_enabled': True,
+                    'cron_expression': '* * * 1 *',
+                    'type': 'pause'
+                },
                 {
-			        'is_enabled': False,
-			        'cron_expression': '* * * 3 *',
-			        'type': 'resume'
-		        }]
-	        },
-	        'strategy': {
-		        'draining_timeout': 100,
-		        'fallback_to_od': True,
-		        'preferred_lifecycle': 'spot',
-		        'revert_to_spot': {
-			        'perform_at': 'always'
-		        },
-		        'signals': [{
-			        'timeout': 180,
-			        'type': 'vmReady'
-		        },
+                    'is_enabled': False,
+                    'cron_expression': '* * * 3 *',
+                    'type': 'resume'
+                }]
+            },
+            'strategy': {
+                'draining_timeout': 100,
+                'fallback_to_od': True,
+                'preferred_lifecycle': 'spot',
+                'revert_to_spot': {
+                    'perform_at': 'always'
+                },
+                'signals': [{
+                    'timeout': 180,
+                    'type': 'vmReady'
+                },
                 {
-			        'timeout': 210,
-			        'type': 'vmReadyToShutdown'
-		        }]
-	        },
-	        'compute': {
-		        'os': 'Linux',
-		        'zones': ["1", "2", "3"],
-		        'preferred_zone': '2',
-		        'vm_sizes': {
-			        'od_sizes': ['standard_a1_v2', 'standard_a2_v2'],
-			        'spot_sizes': ['standard_a1_v2', 'standard_a2_v2'],
-			        'preferred_spot_sizes': ['standard_a1_v2']
-		        },
-		        'launch_specification': {
-			        'boot_diagnostics': {
-				        'is_enabled': True,
-				        'type': 'managed'
-			        },
-			        'custom_data': 'VGhpcyBpcyBjdXN0b20gZGF0YSBmaWVsZA==',
-			        'data_disks': [{
-				        'lun': 0,
-				        'size_g_b': 30,
-				        'type': 'Standard_LRS'
-			        },
+                    'timeout': 210,
+                    'type': 'vmReadyToShutdown'
+                }]
+            },
+            'compute': {
+                'os': 'Linux',
+                'zones': ["1", "2", "3"],
+                'preferred_zone': '2',
+                'vm_sizes': {
+                    'od_sizes': ['standard_a1_v2', 'standard_a2_v2'],
+                    'spot_sizes': ['standard_a1_v2', 'standard_a2_v2'],
+                    'preferred_spot_sizes': ['standard_a1_v2']
+                },
+                'launch_specification': {
+                    'boot_diagnostics': {
+                        'is_enabled': True,
+                        'type': 'managed'
+                    },
+                    'custom_data': 'VGhpcyBpcyBjdXN0b20gZGF0YSBmaWVsZA==',
+                    'data_disks': [{
+                        'lun': 0,
+                        'size_g_b': 30,
+                        'type': 'Standard_LRS'
+                    },
                     {
-				        'lun': 1,
-				        'size_g_b': 32,
-				        'type': 'StandardSSD_LRS'
-			        }],
-			        'image': {
-				        'marketplace': {
-					        'publisher': 'Canonical',
-					        'version': 'latest',
-					        'sku': '18.04-LTS',
-					        'offer': 'UbuntuServer'
-				        }
-			        },
-			        'login': {
-				        'user_name': 'ubuntu',
-				        'ssh_public_key': 'my-ssh-key'
-			        },
-			        'network': {
-				        'resource_group_name': 'AutomationResourceGroup',
-				        'virtual_network_name': 'Automation-VirtualNetwork',
-				        'network_interfaces': [{
-					        'is_primary': True,
-					        'assign_public_ip': True,
-					        'public_ip_sku': 'Standard',
-					        'subnet_name': 'Automation-PrivateSubnet',
-					        'enable_ip_forwarding': True
-				        }]
-			        },
-			        'os_disk': {
-				        'size_g_b': 30,
-				        'type': 'Standard_LRS'
-			        },
-			        'shutdown_script': 'VGhpcyBpcyBzaHV0ZG93biBzY3JpcHQ=',
-			        'tags': [{
-				        'tag_key': 'Creator',
-				        'tag_value': 'Ansible Test'
-			        },
+                        'lun': 1,
+                        'size_g_b': 32,
+                        'type': 'StandardSSD_LRS'
+                    }],
+                    'image': {
+                        'marketplace': {
+                            'publisher': 'Canonical',
+                            'version': 'latest',
+                            'sku': '18.04-LTS',
+                            'offer': 'UbuntuServer'
+                        }
+                    },
+                    'login': {
+                        'user_name': 'ubuntu',
+                        'ssh_public_key': 'my-ssh-key'
+                    },
+                    'network': {
+                        'resource_group_name': 'AutomationResourceGroup',
+                        'virtual_network_name': 'Automation-VirtualNetwork',
+                        'network_interfaces': [{
+                            'is_primary': True,
+                            'assign_public_ip': True,
+                            'public_ip_sku': 'Standard',
+                            'subnet_name': 'Automation-PrivateSubnet',
+                            'enable_ip_forwarding': True
+                        }]
+                    },
+                    'os_disk': {
+                        'size_g_b': 30,
+                        'type': 'Standard_LRS'
+                    },
+                    'shutdown_script': 'VGhpcyBpcyBzaHV0ZG93biBzY3JpcHQ=',
+                    'tags': [{
+                        'tag_key': 'Creator',
+                        'tag_value': 'Ansible Test'
+                    },
                     {
-				        'tag_key': 'Name',
-				        'tag_value': 'Ansible Detailed Example'
-			        }]
-		        }
-	        }
+                        'tag_key': 'Name',
+                        'tag_value': 'Ansible Detailed Example'
+                    }]
+                }
+            }
         }
 
         module = MockModule(input_dict=input_dict)
@@ -167,10 +167,10 @@ class TestTurnToModel(unittest.TestCase):
 
         # test persistence
         expected_persistence = Persistence(data_disks_persistence_mode='reattach',
-		                                    os_disk_persistence_mode='onlaunch',
-		                                    should_persist_data_disks=True,
-		                                    should_persist_network=True,
-		                                    should_persist_os_disk=True)
+                                           os_disk_persistence_mode='onlaunch',
+                                           should_persist_data_disks=True,
+                                           should_persist_network=True,
+                                           should_persist_os_disk=True)
 
         actual_persistence = ssn.persistence
 
@@ -270,7 +270,8 @@ class TestTurnToModel(unittest.TestCase):
 
         expected_network = Network(resource_group_name="AutomationResourceGroup",
                                    virtual_network_name="Automation-VirtualNetwork",
-				                    network_interfaces=[NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard", subnet_name="Automation-PrivateSubnet", enable_ip_forwarding=True)])
+                                    network_interfaces=[NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard", 
+                                                                         subnet_name="Automation-PrivateSubnet", enable_ip_forwarding=True)])
 
         actual_network = ssn.compute.launch_specification.network
 
@@ -290,7 +291,7 @@ class TestTurnToModel(unittest.TestCase):
 
         self.assertEqual(ssn.compute.launch_specification.shutdown_script, "VGhpcyBpcyBzaHV0ZG93biBzY3JpcHQ=")
 
-        expected_tags = [ Tag(tag_key="Creator", tag_value="Ansible Test"), Tag(tag_key="Name", tag_value="Ansible Detailed Example")]
+        expected_tags = [Tag(tag_key="Creator", tag_value="Ansible Test"), Tag(tag_key="Name", tag_value="Ansible Detailed Example")]
         actual_tags = ssn.compute.launch_specification.tags
 
         self.assertEqual(len(actual_tags), len(expected_tags))
