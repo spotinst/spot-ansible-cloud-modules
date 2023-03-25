@@ -167,7 +167,7 @@ class TestTurnToModel(unittest.TestCase):
         self.assertEqual(actual_capacity.target, expected_capacity.target)
 
         # test health
-        expected_health = Health(health_check_types=[ "vmState" ], grace_period=300, unhealthy_duration=120, auto_healing=True)
+        expected_health = Health(health_check_types=["vmState"], grace_period=300, unhealthy_duration=120, auto_healing=True)
 
         actual_health = eg.health
 
@@ -189,7 +189,7 @@ class TestTurnToModel(unittest.TestCase):
 
         # test strategy
         expected_strategy = Strategy(draining_timeout=100, fallback_to_od=True, spot_percentage=100,
-                                     revert_to_spot=RevertToSpot( perform_at="always"),
+                                     revert_to_spot=RevertToSpot(perform_at="always"),
                                      signals=[Signal(timeout=180, type="vmReady"), Signal(timeout=210, type="vmReadyToShutdown")])
 
         actual_strategy = eg.strategy
@@ -252,7 +252,7 @@ class TestTurnToModel(unittest.TestCase):
 
         expected_network = Network(resource_group_name="AutomationResourceGroup",
                                    virtual_network_name="Automation-VirtualNetwork",
-				                    network_interfaces=[ NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard", subnet_name="Automation-PrivateSubnet", enable_ip_forwarding=True) ])
+				                    network_interfaces=[NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard", subnet_name="Automation-PrivateSubnet", enable_ip_forwarding=True)])
 
         actual_network = eg.compute.launch_specification.network
 
@@ -272,7 +272,7 @@ class TestTurnToModel(unittest.TestCase):
 
         self.assertEqual(eg.compute.launch_specification.shutdown_script, "VGhpcyBpcyBzaHV0ZG93biBzY3JpcHQ=")
 
-        expected_tags = [ Tag(tag_key="Creator", tag_value="Ansible Test"), Tag(tag_key="Name", tag_value="Ansible Detailed Example")]
+        expected_tags = [Tag(tag_key="Creator", tag_value="Ansible Test"), Tag(tag_key="Name", tag_value="Ansible Detailed Example")]
         actual_tags = eg.compute.launch_specification.tags
 
         self.assertEqual(len(actual_tags), len(expected_tags))

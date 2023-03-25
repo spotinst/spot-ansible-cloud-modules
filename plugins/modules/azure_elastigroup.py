@@ -133,7 +133,7 @@ options:
                                 description: "Start Time."
                             frequency:
                                 type: str
-                                description: "Frequency."                                
+                                description: "Frequency."                            
                             scale_target_capacity:
                                 type: int
                                 description: "This will set the defined target group capacity when the scheduling task is triggered."
@@ -142,7 +142,7 @@ options:
                                 description: "This will set the defined maximum group capacity when the scheduling task is triggered."
                             scale_max_capacity:
                                 type: int
-                                description: "This will set the defined maximum group capacity when the scheduling task is triggered."            
+                                description: "This will set the defined maximum group capacity when the scheduling task is triggered."
                             batch_size_percentage:
                                 type: int
                                 description: "Indicates the timeout (in seconds) to wait until the VM becomes healthy, based on the healthCheckType."
@@ -151,7 +151,7 @@ options:
                                 description: "Indicates (in seconds) the timeout to wait until instance become healthy based on the healthCheckType."
                             adjustment:
                                 type: str
-                                description: "This will decrease the target capacity by the defined amount when the scheduling task is triggered."                                
+                                description: "This will decrease the target capacity by the defined amount when the scheduling task is triggered."
                             adjustment_percentage:
                                 type: int
                                 description: "This will decrease the target capacity by the defined percentage value when the scheduling task is triggered."
@@ -160,7 +160,7 @@ options:
                                 description: "This will set the defined target group capacity when the scheduling task is triggered."
                             min_capacity:
                                 type: int
-                                description: "This will set the defined maximum group capacity when the scheduling task is triggered." 
+                                description: "This will set the defined maximum group capacity when the scheduling task is triggered."
                             max_capacity:
                                 type: int
                                 description: "This will set the defined maximum group capacity when the scheduling task is triggered."
@@ -191,7 +191,7 @@ options:
                                         description: "Value to update the group target capacity to. Required if using `updateCapacity` as action type."
                                     type:
                                         type: str
-                                        description: "Type of scaling action to take when the scaling policy is triggered. 
+                                        description: "Type of scaling action to take when the scaling policy is triggered.
                                         valid values: `adjustment` and `updateCapacity`"
                             cooldown:
                                 type: int
@@ -218,19 +218,19 @@ options:
                                 description: "Namespace"
                             operator:
                                 type: str
-                                description: "The operator used to evaluate the threshold against the current metric value. 
+                                description: "The operator used to evaluate the threshold against the current metric value.
                                 valid values: `gt`, `gte`, `lt`, `lte`"
                             period:
                                 type: int
-                                description: "Amount of time (seconds) for which the threshold must be met in order to trigger the scaling action. 
+                                description: "Amount of time (seconds) for which the threshold must be met in order to trigger the scaling action.
                                 valid values: 60, 300, 900, 1800, 3600, 7200"
                             policy_name:
                                 type: str
-                                description: "Name of scaling policy." 
+                                description: "Name of scaling policy."
                             statistic:
                                 type: str
                                 description: "Statistic by which to evaluate the selected metric.
-                                valid values: `average`, `total`, `minimum`, `maximum`, `count`"                               
+                                valid values: `average`, `total`, `minimum`, `maximum`, `count`"
                             threshold:
                                 type: float
                                 description: "The value at which the scaling action is triggered."
@@ -260,7 +260,7 @@ options:
                                         description: "Value to update the group target capacity to. Required if using `updateCapacity` as action type."
                                     type:
                                         type: str
-                                        description: "Type of scaling action to take when the scaling policy is triggered. 
+                                        description: "Type of scaling action to take when the scaling policy is triggered.
                                         valid values: `adjustment` and `updateCapacity`"
                             cooldown:
                                 type: int
@@ -268,7 +268,7 @@ options:
                             dimensions:
                                 type: list
                                 elements: dict
-                                description: "Required if scaling.up.namespace is different from "Microsoft.Compute"."
+                                description: "Required if scaling.up.namespace is different from `Microsoft.Compute`."
                                 suboptions:
                                     name:
                                         type: str
@@ -287,32 +287,32 @@ options:
                                 description: "Namespace"
                             operator:
                                 type: str
-                                description: "The operator used to evaluate the threshold against the current metric value. 
+                                description: "The operator used to evaluate the threshold against the current metric value.
                                 valid values: `gt`, `gte`, `lt`, `lte`"
                             period:
                                 type: int
-                                description: "Amount of time (seconds) for which the threshold must be met in order to trigger the scaling action. 
+                                description: "Amount of time (seconds) for which the threshold must be met in order to trigger the scaling action.
                                 valid values: 60, 300, 900, 1800, 3600, 7200"
                             policy_name:
                                 type: str
-                                description: "Name of scaling policy." 
+                                description: "Name of scaling policy."
                             statistic:
                                 type: str
                                 description: "Statistic by which to evaluate the selected metric.
-                                valid values: `average`, `total`, `minimum`, `maximum`, `count`"                               
+                                valid values: `average`, `total`, `minimum`, `maximum`, `count`"
                             threshold:
                                 type: float
                                 description: "The value at which the scaling action is triggered."
                             unit:
                                 type: str
-                                description: "Unit to measure to evaluate the selected metric."         
+                                description: "Unit to measure to evaluate the selected metric."        
             strategy:
                 type: dict
                 description: "Strategy for Elastigroup."
                 suboptions:
                     draining_timeout:
                         type: int
-                        description: "Time (seconds) to allow the VM be drained from incoming TCP connections and detached from MLB before 
+                        description: "Time (seconds) to allow the VM be drained from incoming TCP connections and detached from MLB before
                         terminating it during a scale down operation. Default: 120."
                     fallback_to_od:
                         type: bool
@@ -407,7 +407,7 @@ options:
                                 description: "List of data disks to be attached to the vms in the group."
                                 suboptions:
                                     lun:
-                                        type: str
+                                        type: int
                                         description: "The LUN of the data disk."
                                     size_g_b:
                                         type: int
@@ -619,7 +619,8 @@ options:
                                                         description: "Specify the name of the public IP to which the VMs will be assigned."
                                             public_ip_sku:
                                                 type: str
-                                                description: "Defines the type of public IP to assign the VM. Required if assignPublicIp=true. Valid Values: `Standard`, `Basic`"
+                                                description: "Defines the type of public IP to assign the VM. Required if assignPublicIp=true. 
+                                                valid values: `Standard`, `Basic`"
                                             subnet_name:
                                                 type: str
                                                 description: "Defines the subnet to which the network interface will be connected."
@@ -703,7 +704,7 @@ EXAMPLES = """
             health_check_types: ["vmState"]
             auto_healing: false
             grace_period: 300
-            unhealthy_duration: 120           
+            unhealthy_duration: 120
           scheduling:
             tasks:
               - is_enabled: true
@@ -720,12 +721,12 @@ EXAMPLES = """
               - timeout: 180
                 type: "vmReady"
               - timeout: 210
-                type: "vmReadyToShutdown"  
+                type: "vmReadyToShutdown"
           compute:
             os: "Linux"
             zones: ["1", "2", "3"]
             preferred_zones: ["1", "2"]
-            vm_sizes: 
+            vm_sizes:
               od_sizes: ["standard_ds1_v2", "standard_ds2_v2"]
               spot_sizes: ["standard_ds1_v2", "standard_ds2_v2"]
               preferred_spot_sizes: ["standard_ds1_v2"]
@@ -1071,7 +1072,7 @@ def handle_create_elastigroup(client, elastigroup_module_copy):
     ami_sdk_object = turn_to_model(
         elastigroup_module_copy, "elastigroup"
     )
-   
+
     res: dict = client.create_elastigroup(group=ami_sdk_object)
 
     f = open("debug.txt", "w")
@@ -1102,7 +1103,7 @@ def main():
 
     task_fields = dict(
         is_enabled=dict(type="bool"),
-        frequency=dict(type="str"),        
+        frequency=dict(type="str"),
         start_time=dict(type="str"),
         cron_expression=dict(type="str"),
         type=dict(type="str"),
@@ -1132,7 +1133,7 @@ def main():
         type=dict(type="str"),
         minimum=dict(type="int"),
         maximum=dict(type="int"),
-        target=dict(type="int"),               
+        target=dict(type="int"),
     )
 
     scaling_policy_fields = dict(
@@ -1267,7 +1268,7 @@ def main():
         application_security_groups=dict(type="list", elements="dict", options=security_group_fields),
         assign_public_ip=dict(type="bool"),
         enable_ip_forwarding=dict(type="bool"),
-        is_primary=dict(type="bool"),        
+        is_primary=dict(type="bool"),
         private_ip_addresses=dict(type="list", elements="str"),
         public_ips=dict(type="list", elements="dict", options=public_ip_fields),
         public_ip_sku=dict(type="str"),
@@ -1282,7 +1283,7 @@ def main():
     )
 
     os_disk_fields = dict(
-        size=dict(type="str"),
+        size=dict(type="int"),
         type=dict(type="str"),
     )
 
