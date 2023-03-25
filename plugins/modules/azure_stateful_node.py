@@ -132,12 +132,15 @@ options:
             name:
                 type: str
                 description: "The stateful node's name."
+                required: true
             region:
                 type: str
                 description: "The Azure region in which the Stateful Node will be launched."
+                required: true
             resource_group_name:
                 type: str
                 description: "The Azure resource group in which the VM and all of the subsequent subresources will be launched."
+                required: true
             description:
                 type: str
                 description: "optional description for the stateful node."
@@ -293,7 +296,7 @@ options:
                                 description: "The definitions of data disks that will be created and attached to the stateful node's VM."
                                 suboptions:
                                     lun:
-                                        type: str
+                                        type: int
                                         description: "The LUN of the data disk."
                                     size_g_b:
                                         type: int
@@ -370,7 +373,7 @@ options:
                                             version:
                                                 type: str
                                                 description: "Image Version. Default: `latest`"
-                            licence_type:
+                            license_type:
                                 type: str
                                 description:
                                     - "Specify an existing Azure license type to use when launching new VMs."
@@ -1165,7 +1168,7 @@ def main():
     )
 
     os_disk_fields = dict(
-        size_g_b=dict(type="str"),
+        size_g_b=dict(type="int"),
         type=dict(type="str"),
     )
 

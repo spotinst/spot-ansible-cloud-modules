@@ -26,10 +26,12 @@ from spotinst_sdk2.models.stateful_node import (
 
 sys.modules['spotinst_sdk'] = MagicMock()
 
+
 class MockModule:
 
     def __init__(self, input_dict):
         self.params = input_dict
+
 
 class TestTurnToModel(unittest.TestCase):
     """Unit test for the turn to model helper function"""
@@ -179,7 +181,7 @@ class TestTurnToModel(unittest.TestCase):
         self.assertEqual(actual_persistence.should_persist_os_disk, expected_persistence.should_persist_os_disk)
 
         # test health
-        expected_health = Health(health_check_types=[ "vmState" ], grace_period=300, unhealthy_duration=120, auto_healing=True)
+        expected_health = Health(health_check_types=["vmState"], grace_period=300, unhealthy_duration=120, auto_healing=True)
 
         actual_health = ssn.health
 
@@ -205,7 +207,7 @@ class TestTurnToModel(unittest.TestCase):
 
         # test strategy
         expected_strategy = Strategy(draining_timeout=100, fallback_to_od=True, preferred_lifecycle="spot",
-                                     revert_to_spot=RevertToSpot( perform_at="always"),
+                                     revert_to_spot=RevertToSpot(perform_at="always"),
                                      signals=[Signal(timeout=180, type="vmReady"), Signal(timeout=210, type="vmReadyToShutdown")])
 
         actual_strategy = ssn.strategy
@@ -268,7 +270,7 @@ class TestTurnToModel(unittest.TestCase):
 
         expected_network = Network(resource_group_name="AutomationResourceGroup",
                                    virtual_network_name="Automation-VirtualNetwork",
-				                    network_interfaces=[ NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard", subnet_name="Automation-PrivateSubnet", enable_ip_forwarding=True) ])
+				                    network_interfaces=[NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard", subnet_name="Automation-PrivateSubnet", enable_ip_forwarding=True)])
 
         actual_network = ssn.compute.launch_specification.network
 
