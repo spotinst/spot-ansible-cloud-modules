@@ -594,7 +594,7 @@ EXAMPLES = """
             health_check_types: ["vmState"]
             auto_healing: true
             grace_period: 300
-            unhealthy_duration: 120  
+            unhealthy_duration: 120
           strategy:
             draining_timeout: 300
             fallback_to_od: true
