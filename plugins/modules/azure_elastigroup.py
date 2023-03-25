@@ -780,7 +780,7 @@ HAS_ANSIBLE_MODULE = False
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 
 try:
-    from ..module_utils.spot_ansible_module import SpotAnsibleModule
+    from ansible.module_utils.spot_ansible_module import SpotAnsibleModule
     import copy
     import json
 

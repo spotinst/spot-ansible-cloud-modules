@@ -35,3 +35,17 @@ New Modules
 -----------
 
 - spot.cloud_modules.azure_stateful_node - Manage (Create, Update, Delete) Azure Stateful Nodes
+
+
+v1.2.0
+======
+
+Release Summary
+---------------
+
+Adding support for Azure Elastigroups.
+
+New Modules
+-----------
+
+- spot.cloud_modules.azure_elastigroup - Manage (Create, Update, Delete) Azure Elastigroups
