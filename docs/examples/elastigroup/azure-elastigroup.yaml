@@ -1,0 +1,81 @@
+- hosts: localhost
+  tasks:
+    - name: azure_elastigroup_sample
+      spot.cloud_modules.azure_elastigroup:
+        state: present
+        uniqueness_by: "id"
+        do_not_update:
+          - region
+          - resource_group_name
+          - compute.os
+        elastigroup:
+          name: "ansible-azure-elastigroup-example"
+          description: "a sample Azure Elastigroup created via Ansible"
+          region: "eastus"
+          resource_group_name: "AutomationResourceGroup"
+          capacity:
+            minimum: 2
+            maximum: 2
+            target: 2
+          health:
+            health_check_types: ["vmState"]
+            auto_healing: false
+            grace_period: 300
+            unhealthy_duration: 120           
+          scheduling:
+            tasks:
+              - is_enabled: true
+                cron_expression: "* * * 1 *"
+                type: "scaleUp"
+                adjustment: 2
+          strategy:
+            draining_timeout: 300
+            fallback_to_od: true
+            revert_to_spot:
+              perform_at: "always"
+            spot_percentage: 100
+            signals:
+              - timeout: 180
+                type: "vmReady"
+              - timeout: 210
+                type: "vmReadyToShutdown"  
+          compute:
+            os: "Linux"
+            zones: ["1", "2", "3"]
+            preferred_zones: ["1", "2"]
+            vm_sizes: 
+              od_sizes: ["standard_ds1_v2", "standard_ds2_v2"]
+              spot_sizes: ["standard_ds1_v2", "standard_ds2_v2"]
+              preferred_spot_sizes: ["standard_ds1_v2"]
+            launch_specification:
+              data_disks:
+                - lun: 0
+                  size_g_b: 30
+                  type: "Standard_LRS"
+              image:
+                marketplace:
+                  publisher: "Canonical"
+                  version: "latest"
+                  sku: "18.04-LTS"
+                  offer: "UbuntuServer"
+              login:
+                user_name: "ubuntu"
+                ssh_public_key: <add-your-ssh-key>"
+              network:
+                resource_group_name: "AutomationResourceGroup"
+                virtual_network_name: "Automation-VirtualNetwork"
+                network_interfaces:
+                  - is_primary: true
+                    assign_public_ip: true
+                    public_ip_sku: "Standard"
+                    subnet_name: "Automation-PrivateSubnet"
+                    enable_ip_forwarding: true
+              os_disk:
+                size: 30
+                type: "Standard_LRS"
+              shutdown_script: "VGhpcyBpcyBzaHV0ZG93biBzY3JpcHQ="
+              tags:
+                - tag_key: "Creator"
+                  tag_value: "Ansible Test"
+      register: result
+    - debug: var=result

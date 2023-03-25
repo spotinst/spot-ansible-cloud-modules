@@ -68,12 +68,15 @@ options:
             name:
                 type: str
                 description: "The stateful node's name."
+                required: true
             region:
                 type: str
                 description: "The Azure region in which the Stateful Node will be launched."
+                required: true
             resource_group_name:
                 type: str
                 description: "The Azure resource group in which the VM and all of the subsequent subresources will be launched."
+                required: true
             description:
                 type: str
                 description: "optional description for the stateful node."
@@ -196,7 +199,7 @@ options:
                             dimensions:
                                 type: list
                                 elements: dict
-                                description: "Required if scaling.up.namespace is different from "Microsoft.Compute"."
+                                description: "Required if scaling.up.namespace is different from `Microsoft.Compute`."
                                 suboptions:
                                     name:
                                         type: str
@@ -679,43 +682,53 @@ EXAMPLES = """
 # Basic Example
 - hosts: localhost
   tasks:
-    - name: stateful_node
-      spot.cloud_modules.azure_stateful_node:
+    - name: azure_elastigroup_sample
+      spot.cloud_modules.azure_elastigroup:
         state: present
         uniqueness_by: "id"
         do_not_update:
           - region
           - resource_group_name
-        stateful_node:
-          name: "ansible-stateful-node-example"
-          description: "a sample Stateful Node created via Ansible"
+          - compute.os
+        elastigroup:
+          name: "ansible-azure-elastigroup-example"
+          description: "a sample Azure Elastigroup created via Ansible"
           region: "eastus"
           resource_group_name: "AutomationResourceGroup"
-          persistence:
-            data_disks_persistence_mode: "reattach"
-            os_disk_persistence_mode: "reattach"
-            should_persist_data_disks: true
-            should_persist_network: true
-            should_persist_os_disk: true
+          capacity:
+            minimum: 2
+            maximum: 2
+            target: 2
           health:
             health_check_types: ["vmState"]
-            auto_healing: true
+            auto_healing: false
             grace_period: 300
-            unhealthy_duration: 120  
+            unhealthy_duration: 120           
+          scheduling:
+            tasks:
+              - is_enabled: true
+                cron_expression: "* * * 1 *"
+                type: "scaleUp"
+                adjustment: 2
           strategy:
             draining_timeout: 300
             fallback_to_od: true
-            preferred_lifecycle: "spot"
             revert_to_spot:
               perform_at: "always"
+            spot_percentage: 100
+            signals:
+              - timeout: 180
+                type: "vmReady"
+              - timeout: 210
+                type: "vmReadyToShutdown"  
           compute:
             os: "Linux"
-            zones: ["1", "2"]
-            preferred_zone: "2"
-            vm_sizes:
-              od_sizes: ["standard_a1_v2", "standard_a2_v2"]
-              spot_sizes: ["standard_a1_v2", "standard_a2_v2"]
-              preferred_spot_sizes: ["standard_a1_v2"]
+            zones: ["1", "2", "3"]
+            preferred_zones: ["1", "2"]
+            vm_sizes: 
+              od_sizes: ["standard_ds1_v2", "standard_ds2_v2"]
+              spot_sizes: ["standard_ds1_v2", "standard_ds2_v2"]
+              preferred_spot_sizes: ["standard_ds1_v2"]
             launch_specification:
               data_disks:
                 - lun: 0
@@ -740,24 +753,23 @@ EXAMPLES = """
                     subnet_name: "Automation-PrivateSubnet"
                     enable_ip_forwarding: true
               os_disk:
-                size_g_b: 30
+                size: 30
                 type: "Standard_LRS"
+              shutdown_script: "VGhpcyBpcyBzaHV0ZG93biBzY3JpcHQ="
               tags:
                 - tag_key: "Creator"
                   tag_value: "Ansible Test"
-                - tag_key: "Name"
-                  tag_value: "Ansible Basic Example"
       register: result
     - debug: var=result
 """
 
 RETURN = """
 ---
-stateful_node_id:
-    description: The ID of the stateful node that was just created/update/deleted.
+group_id:
+    description: The ID of the azure elastigroup that was just created/update/deleted.
     returned: success
     type: str
-    sample: ssn-792f7f87
+    sample: sig-15b1a394
 """
 
 HAS_SPOTINST_SDK = False
@@ -767,8 +779,9 @@ HAS_ANSIBLE_MODULE = False
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 
 try:
-    from ansible.module_utils.spot_ansible_module import SpotAnsibleModule
+    from ..module_utils.spot_ansible_module import SpotAnsibleModule
     import copy
+    import json
 
     HAS_ANSIBLE_MODULE = True
 
@@ -790,10 +803,13 @@ CLS_NAME_BY_ATTR_NAME = {
     "elastigroup.scaling.up": "ScalingPolicy",
     "elastigroup.scaling.down": "ScalingPolicy",
     "elastigroup.strategy.signals": "Signal",
+    "elastigroup.compute.launch_specification.managed_service_identities": "ManagedServiceIdentity",
     "elastigroup.compute.launch_specification.load_balancers_config": "LoadBalancerConfig",
     "elastigroup.compute.launch_specification.network.network_interfaces": "NetworkInterface",
     "elastigroup.compute.launch_specification.data_disks": "DataDisk",
     "elastigroup.compute.launch_specification.tags": "Tag",
+    "elastigroup.compute.launch_specification.extensions": "Extension",
+    "elastigroup.compute.launch_specification.secrets": "Secret",
 }
 
 LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
@@ -802,6 +818,9 @@ LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
     "elastigroup.scaling.up.dimensions": "ScalingPolicyDimension",
     "elastigroup.scaling.down.dimensions": "ScalingPolicyDimension",
     "elastigroup.compute.launch_specification.load_balancers_config.load_balancers": "LoadBalancer",
+    "elastigroup.compute.launch_specification.network.network_interfaces.application_security_groups": "ApplicationSecurityGroup",
+    "elastigroup.compute.launch_specification.network.network_interfaces.additional_ip_configurations": "AdditionalIpConfiguration",
+    "elastigroup.compute.launch_specification.secrets.vault_certificates": "VaultCertificate"
 }
 
 
@@ -855,7 +874,7 @@ def get_client(module):
     else:
         session = spotinst.SpotinstSession(auth_token=token)
 
-    client = session.client("elastigroup_azure")
+    client = session.client("elastigroup_azure_v3")
 
     return client
 
@@ -883,7 +902,7 @@ def turn_to_model(content, field_name: str, curr_path=None):
         override = find_in_overrides(curr_path)
         key_to_use = override if override else to_pascal_case(field_name)
 
-        class_ = getattr(spotinst.models.stateful_node, key_to_use)
+        class_ = getattr(spotinst.models.elastigroup.azure_v3, key_to_use)
         instance = class_()
 
         for key, value in content.items():
@@ -982,149 +1001,98 @@ def get_id_and_operation(client, state: str, module):
     return operation, id
 
 
-def handle_(client, module):
-    ssn_models = spotinst.models.stateful_node
-    elastigroup_module_copy = copy.deepcopy(module.custom_params.get("stateful_node"))
+def handle_elastigroup(client, module):
+    eg_models = spotinst.models.elastigroup.azure_v3
+    elastigroup_module_copy = copy.deepcopy(module.custom_params.get("elastigroup"))
     state = module.custom_params.get("state")
 
-    operation, ssn_id = get_id_and_operation(client, state, module)
+    operation, id = get_id_and_operation(client, state, module)
 
     if operation == "create":
-        has_changed, stateful_node_id, message = handle_create_stateful_node(client, elastigroup_module_copy)
+        has_changed, group_id, message = handle_create_elastigroup(client, elastigroup_module_copy)
     elif operation == "update":
-        has_changed, stateful_node_id, message = handle_update_stateful_node(client, elastigroup_module_copy, ssn_id, module)
+        has_changed, group_id, message = handle_update_elastigroup(client, elastigroup_module_copy, id, module)
     elif operation == "delete":
-        has_changed, stateful_node_id, message = handle_delete_stateful_node(client, ssn_id, ssn_models, module)
+        has_changed, group_id, message = handle_delete_elastigroup(client, id, eg_models, module)
     else:
         module.fail_json(changed=False, msg=f"Unknown operation {operation} - "
                                             f"this is probably a bug in the module's code: please report")
         return None, None, None  # for IDE - fail_json stops execution
 
-    return stateful_node_id, message, has_changed
+    return group_id, message, has_changed
 
 
-def handle_delete_stateful_node(client, ssn_id, ssn_models, module):
-    stateful_node_id = ssn_id
-    delete_args = dict(node_id=stateful_node_id)
-
-    handle_deletion_config(delete_args, ssn_models, module)
+def handle_delete_elastigroup(client, id, eg_models, module):
+    group_id = id
+    delete_args = dict(group_id=group_id)
 
     try:
-        client.delete_stateful_node(**delete_args)
-        message = f"Stateful node {stateful_node_id} deleted successfully"
+        client.delete_elastigroup(**delete_args)
+        message = f"Elastigroup {group_id} deleted successfully"
         has_changed = True
     except SpotinstClientException as exc:
-        if "STATEFUL_NODE_DOES_NOT_EXIST" in exc.message:
-            message = f"Failed deleting stateful node - Stateful Node with ID {stateful_node_id} doesn't exist"
+        if "RESOURCE_DOES_NOT_EXIST" in exc.message:
+            message = f"Failed deleting elastigroup - Elastigroup with ID {group_id} doesn't exist"
             module.fail_json(changed=False, msg=message)
         else:
-            message = f"Failed deleting stateful node (ID: {stateful_node_id}), error: {exc.message}"
+            message = f"Failed deleting elastigroup (ID: {group_id}), error: {exc.message}"
             module.fail_json(msg=message)
         has_changed = False
 
-    return has_changed, stateful_node_id, message
+    return has_changed, group_id, message
 
 
-def handle_update_stateful_node(client, elastigroup_module_copy, ssn_id, module):
+def handle_update_elastigroup(client, elastigroup_module_copy, id, module):
     elastigroup_module_copy = clean_do_not_update_fields(
         elastigroup_module_copy,
         module.custom_params.get("do_not_update")
     )
-    ami_sdk_object = turn_to_model(elastigroup_module_copy, "stateful_node")
+    ami_sdk_object = turn_to_model(elastigroup_module_copy, "elastigroup")
 
     try:
-        res: dict = client.update_stateful_node(node_id=ssn_id, node_update=ami_sdk_object)
-        stateful_node_id = res["id"]
-        message = "Stateful node updated successfully"
+        res: dict = client.update_elastigroup(group_id=id, group_update=ami_sdk_object)
+        group_id = res["id"]
+        message = "Elastigroup updated successfully"
         has_changed = True
 
-        action_type = module.custom_params.get("action", None)
-        should_perform_action = action_type is not None
-
-        if should_perform_action:
-            message = attempt_stateful_action(
-                action_type, client, stateful_node_id, message
-            )
-
     except SpotinstClientException as exc:
-        if "STATEFUL_NODE_DOES_NOT_EXIST" in exc.message:
-            message = f"Failed updating stateful node - stateful node with ID {stateful_node_id} doesn't exist"
+        if "RESOURCE_DOES_NOT_EXIST" in exc.message:
+            message = f"Failed updating elastigroup - elastigroup with ID {group_id} doesn't exist"
             module.fail_json(changed=False, msg=message)
         else:
-            message = f"Failed updating stateful node (ID {stateful_node_id}), error: {exc.message}"
+            message = f"Failed updating elastigroup (ID {group_id}), error: {exc.message}"
             module.fail_json(msg=message)
         has_changed = False
 
-    return has_changed, stateful_node_id, message
+    return has_changed, group_id, message
 
 
-def handle_create_stateful_node(client, elastigroup_module_copy):
+def handle_create_elastigroup(client, elastigroup_module_copy):
     ami_sdk_object = turn_to_model(
-        elastigroup_module_copy, "stateful_node"
+        elastigroup_module_copy, "elastigroup"
     )
+   
+    res: dict = client.create_elastigroup(group=ami_sdk_object)
 
-    res: dict = client.create_stateful_node(node=ami_sdk_object)
-    stateful_node_id = res["id"]
-    message = "Stateful node created successfully"
+    f = open("debug.txt", "w")
+    f.write(json.dumps(res))
+    f.close()
+
+    group_id = res["id"]
+    message = "Elastigroup created successfully"
     has_changed = True
-    return has_changed, stateful_node_id, message
-
-
-def handle_deletion_config(delete_args, ssn_models, module):
-    ssn_config = module.custom_params.get("stateful_node_config")
-
-    if ssn_config is not None:
-        deletion_config = ssn_config.get("deletion_config")
-
-        if deletion_config is not None:
-            deallocation_config = deletion_config.get("deallocation_config")
-
-            if deallocation_config is not None:
-                disk_deallocation_config = deallocation_config.get("disk_deallocation_config")
-                network_deallocation_config = deallocation_config.get("network_deallocation_config")
-                public_ip_deallocation_config = deallocation_config.get("public_ip_deallocation_config")
-                snapshot_deallocation_config = deallocation_config.get("snapshot_deallocation_config")
-                should_terminate_vm = deallocation_config.get("should_terminate_vm")
-
-                configs = {}
-                if disk_deallocation_config is not None:
-                    dealloc_sdk_object = turn_to_model(disk_deallocation_config, "deallocate")
-                    configs["disk_deallocation_config"] = dealloc_sdk_object
-
-                if network_deallocation_config is not None:
-                    dealloc_sdk_object = turn_to_model(network_deallocation_config, "deallocate")
-                    configs["network_deallocation_config"] = dealloc_sdk_object
-
-                if public_ip_deallocation_config is not None:
-                    dealloc_sdk_object = turn_to_model(public_ip_deallocation_config, "deallocate")
-                    configs["public_ip_deallocation_config"] = dealloc_sdk_object
-
-                if snapshot_deallocation_config is not None:
-                    dealloc_sdk_object = turn_to_model(snapshot_deallocation_config, "deallocate")
-                    configs["snapshot_deallocation_config"] = dealloc_sdk_object
-
-                if should_terminate_vm is not None:
-                    configs["should_terminate_vm"] = should_terminate_vm
-
-                delete_args["deallocation_config"] = configs
-
-
-def attempt_stateful_action(action_type, client, stateful_node_id, message):
-    try:
-        if action_type == "pause":
-            client.update_stateful_node_state(node_id=stateful_node_id, state="pause")
-        if action_type == "resume":
-            client.update_stateful_node_state(node_id=stateful_node_id, state="resume")
-        if action_type == "recycle":
-            client.update_stateful_node_state(node_id=stateful_node_id, state="recycle")
-
-        message = message + f" and action '{action_type}' started"
-    except SpotinstClientException as exc:
-        message = message + f" but action '{action_type}' failed, error: {exc.message}"
-    return message
+    return has_changed, group_id, message
 
 
 def main():
+    global HAS_ANSIBLE_MODULE
+
+    capacity_fields = dict(
+        maximum=dict(type="int"),
+        minimum=dict(type="int"),
+        target=dict(type="int"),
+    )
+
     health_fields = dict(
         health_check_types=dict(type="str"),
         auto_healing=dict(type="bool"),
@@ -1154,6 +1122,40 @@ def main():
         tasks=dict(type="list", elements="dict", options=task_fields)
     )
 
+    scaling_policy_dimension_fields = dict(
+        key=dict(type="str"),
+        value=dict(type="str"),
+    )
+
+    scaling_policy_action_fields = dict(
+        adjustment=dict(type="str"),
+        type=dict(type="str"),
+        minimum=dict(type="int"),
+        maximum=dict(type="int"),
+        target=dict(type="int"),               
+    )
+
+    scaling_policy_fields = dict(
+        is_enabled=dict(type="bool"),
+        policy_name=dict(type="str"),
+        namespace=dict(type="str"),
+        metric_name=dict(type="str"),
+        dimensions=dict(type="list", elements="dict", options=scaling_policy_dimension_fields),
+        statistic=dict(type="str"),
+        unit=dict(type="str"),
+        threshold=dict(type="float"),
+        period=dict(type="int"),
+        evaluation_periods=dict(type="int"),
+        cooldown=dict(type="int"),
+        action=dict(elements="dict", options=scaling_policy_action_fields),
+        operator=dict(type="str"),
+    )
+
+    scaling_fields = dict(
+        up=dict(type="list", elements="dict", options=scaling_policy_fields),
+        down=dict(type="list", elements="dict", options=scaling_policy_fields),
+    )
+
     revert_to_spot_fields = dict(perform_at=dict(type="str"))
 
     signal_fields = dict(
@@ -1163,13 +1165,14 @@ def main():
 
     strategy_fields = dict(
         draining_timeout=dict(type="int"),
+        fallback_to_od=dict(type="bool"),
         on_demand_count=dict(type="int"),
         optimization_windows=dict(type="list", elements="str"),
         orientation=dict(type="str"),
         revert_to_spot=dict(type="dict", options=revert_to_spot_fields),
         signals=dict(type="list", elements="dict", options=signal_fields),
         spot_percentage=dict(type="int"),
-        fallback_to_od=dict(type="bool"),
+
     )
 
     boot_diagnostics_fields = dict(
@@ -1220,11 +1223,13 @@ def main():
     )
 
     load_balancers_fields = dict(
-        backend_pool_names=dict(type="list", elements="str"),
-        load_balancer_sku=dict(type="str"),
-        name=dict(type="str"),
+        application_gateway_name=dict(type="str"),
+        backend_pool_name=dict(type="str"),
         resource_group_name=dict(type="str"),
         type=dict(type="str"),
+        auto_weight=dict(type="str"),
+        balancer_id=dict(type="str"),
+        target_set_id=dict(type="str"),
     )
 
     load_balancers_config_fields = dict(
@@ -1262,11 +1267,11 @@ def main():
         application_security_groups=dict(type="list", elements="dict", options=security_group_fields),
         assign_public_ip=dict(type="bool"),
         enable_ip_forwarding=dict(type="bool"),
-        is_primary=dict(type="bool"),
-        network_security_group=dict(type="dict", options=security_group_fields),
+        is_primary=dict(type="bool"),        
         private_ip_addresses=dict(type="list", elements="str"),
         public_ips=dict(type="list", elements="dict", options=public_ip_fields),
         public_ip_sku=dict(type="str"),
+        security_group=dict(type="dict", options=security_group_fields),
         subnet_name=dict(type="str"),
     )
 
@@ -1277,7 +1282,7 @@ def main():
     )
 
     os_disk_fields = dict(
-        size_g_b=dict(type="str"),
+        size=dict(type="str"),
         type=dict(type="str"),
     )
 
@@ -1304,7 +1309,6 @@ def main():
         data_disks=dict(type="list", elements="dict", options=data_disk_fields),
         extensions=dict(type="list", elements="dict", options=extension_fields),
         image=dict(type="dict", options=image_fields),
-        license_type=dict(type="str"),
         load_balancers_config=dict(type="dict", options=load_balancers_config_fields),
         login=dict(type="dict", options=login_fields),
         managed_service_identities=dict(type="list", elements="dict", options=managed_service_identity_fields),
@@ -1313,7 +1317,6 @@ def main():
         secrets=dict(type="list", elements="dict", options=secret_fields),
         shutdown_script=dict(type="str"),
         tags=dict(type="list", elements="dict", options=tags_fields),
-        vm_name=dict(type="str"),
         vm_name_prefix=dict(type="str"),
     )
 
@@ -1326,7 +1329,7 @@ def main():
     compute_fields = dict(
         launch_specification=dict(type="dict", options=launch_spec_fields),
         os=dict(type="str"),
-        preferred_zone=dict(type="str"),
+        preferred_zones=dict(type="list", elements="str"),
         vm_sizes=dict(type="dict", options=vm_sizes_fields),
         zones=dict(type="list", elements="str"),
     )
@@ -1336,32 +1339,12 @@ def main():
         region=dict(type="str", required=True),
         resource_group_name=dict(type="str", required=True),
         description=dict(type="str"),
-        persistence=dict(type="dict", options=persistence_fields),
+        scaling=dict(type="dict", options=scaling_fields),
         health=dict(type="dict", options=health_fields),
         scheduling=dict(type="dict", options=scheduling_fields),
         strategy=dict(type="dict", options=strategy_fields),
-        compute=dict(type="dict", options=compute_fields)
-    )
-
-    deallocate_config = dict(
-        should_deallocate=dict(type="bool"),
-        ttl_in_hours=dict(type="int"),
-    )
-
-    deallocation_config_fields = dict(
-        disk_deallocation_config=dict(type="dict", options=deallocate_config),
-        network_deallocation_config=dict(type="dict", options=deallocate_config),
-        public_ip_deallocation_config=dict(type="dict", options=deallocate_config),
-        snapshot_deallocation_config=dict(type="dict", options=deallocate_config),
-        should_terminate_vm=dict(type="bool"),
-    )
-
-    deletion_config_fields = dict(
-        deallocation_config=dict(type="dict", options=deallocation_config_fields)
-    )
-
-    stateful_node_config_fields = dict(
-        deletion_config=dict(type="dict", options=deletion_config_fields)
+        compute=dict(type="dict", options=compute_fields),
+        capacity=dict(type="dict", options=capacity_fields),
     )
 
     fields = dict(
@@ -1379,13 +1362,8 @@ def main():
         do_not_update=dict(type="list", elements="str"),
         # endregion
 
-        # region stateful node specific config fields
-        action=dict(type="str", choices=["pause", "resume", "recycle"]),
-        stateful_node_config=dict(type="dict", options=stateful_node_config_fields),
-        # endregion
-
-        # region stateful_node
-        stateful_node=dict(type="dict", required=True, options=actual_fields)
+        # region elastigroup
+        elastigroup=dict(type="dict", required=True, options=actual_fields)
         # endregion
     )
 
@@ -1410,12 +1388,12 @@ def main():
 
     client = get_client(module=module)
 
-    stateful_node_id, message, has_changed = handle_stateful_node(
+    group_id, message, has_changed = handle_elastigroup(
         client=client, module=module
     )
 
     module.exit_json(
-        changed=has_changed, stateful_node_id=stateful_node_id, message=message
+        changed=has_changed, group_id=group_id, message=message
     )
 
 
