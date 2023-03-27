@@ -863,10 +863,10 @@ def get_id_and_operation(client, state: str, module):
 
             if len(nodes_with_name) == 1:
                 id = nodes_with_name[0]["id"]
-            if len(nodes_with_name) > 1:
+            elif len(nodes_with_name) > 1:
                 msg = f"Failed deleting stateful node - 'uniqueness_by' is set to 'name' but there's more than one stateful node with the name '{name}'"
                 module.fail_json(changed=False, msg=msg)
-            if len(nodes_with_name) == 0:
+            elif len(nodes_with_name) == 0:
                 msg = f"Failed deleting stateful node - 'uniqueness_by' is set to 'name' but there is no stateful node with the name '{name}'"
                 module.fail_json(changed=False, msg=msg)
 
