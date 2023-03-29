@@ -654,19 +654,11 @@ stateful_node_id:
 """
 
 HAS_SPOTINST_SDK = False
-HAS_ANSIBLE_MODULE = False
 
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
-
-try:
-    from ansible.module_utils.spot_ansible_module import SpotAnsibleModule
-    import copy
-
-    HAS_ANSIBLE_MODULE = True
-
-except ImportError as e:
-    pass
+from ansible.module_utils.basic import env_fallback
+from ansible_collections.spot.cloud_modules.plugins.module_utils.spot_ansible_module import SpotAnsibleModule
+import copy
 
 try:
     import spotinst_sdk2 as spotinst
@@ -1019,8 +1011,6 @@ def attempt_stateful_action(action_type, client, stateful_node_id, message):
 
 
 def main():
-    global HAS_ANSIBLE_MODULE
-
     persistence_fields = dict(
         data_disks_persistence_mode=dict(type="str"),
         os_disk_persistence_mode=dict(type="str"),
@@ -1280,19 +1270,7 @@ def main():
         # endregion
     )
 
-    # unchecked imports are not allowed for modules
-    # so we have to guard against the import AnsibleModule statement, even though AnsibleModule
-    # is part of ansible-core.
-    try:
-        module = SpotAnsibleModule(argument_spec=fields)
-    except (AttributeError, NameError, ImportError):
-        module = AnsibleModule(argument_spec=fields)
-        HAS_ANSIBLE_MODULE = False
-
-    if not HAS_ANSIBLE_MODULE:
-        module.fail_json(
-            msg="the Spotinst Ansible module is required."
-        )
+    module = SpotAnsibleModule(argument_spec=fields)
 
     if not HAS_SPOTINST_SDK:
         module.fail_json(
