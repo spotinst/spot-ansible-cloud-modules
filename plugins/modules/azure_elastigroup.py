@@ -1065,11 +1065,6 @@ def handle_create_elastigroup(client, elastigroup_module_copy):
     )
 
     res: dict = client.create_elastigroup(group=ami_sdk_object)
-
-    f = open("debug.txt", "w")
-    f.write(json.dumps(res))
-    f.close()
-
     group_id = res["id"]
     message = "Elastigroup created successfully"
     has_changed = True
