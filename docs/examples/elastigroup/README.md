@@ -15,6 +15,7 @@
     * [CodeDeploy](elastigroup-code-deploy.yml)
     * [Route53](elastigroup-route53.yml)
     * [ElasticBeanstalk](elastigroup-elasticbeanstalk.yml)
+  * [Azure Elastigroup](azure-elastigroup.yaml)
 <!--te-->
 
 

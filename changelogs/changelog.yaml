@@ -1,15 +1,25 @@
 ancestor: null
 releases:
+  1.2.0:
+    changes:
+      release_summary: Adding Azure Elastigroups support in spot.cloud_modules collection.
+    fragments:
+    - 1-2-0-summary.yml
+    modules:
+    - description: Create, update or delete Spot Azure Elastigroups
+      name: azure_elastigroup
+      namespace: ''
+    release_date: '2023-03-30'
   1.1.0:
     changes:
-      release_summary: New collection - adding all existing modules.
+      release_summary: Adding Azure Stateful Node support in spot.cloud_modules collection.
     fragments:
     - 1-1-0-summary.yml
     modules:
     - description: Create, update or delete Spot Azure Stateful Nodes
       name: azure_stateful_node
       namespace: ''
-    release_date: '2023-03-20'
+    release_date: '2023-03-29'
   1.0.0:
     changes:
       release_summary: New collection - adding all existing modules.

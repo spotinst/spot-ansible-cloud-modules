@@ -15,7 +15,7 @@ Version 2 of Spot's Python SDK does not support Python 2.7 so this collection re
 
 ## Spot Python SDK compatibility
 
-Version `1.1.0` of this collection requires at least version `2.1.29` of Spot's Python SDK.
+Version `1.2.0` of this collection requires at least version `2.1.30` of Spot's Python SDK.
 
 ## Included content
 
@@ -30,6 +30,7 @@ Name | Description
 [spot.cloud_modules.aws_mrscaler](https://github.com/spotinst/spot-ansible-cloud-modules/blob/main/docs/examples/emr/README.md)|Manage Spot MR Scalers
 [spot.cloud_modules.event_subscription](https://github.com/spotinst/spot-ansible-cloud-modules/blob/main/docs/examples/events/README.md)|Manage Spot Event Subscriptions
 [spot.cloud_modules.azure_stateful_node](https://github.com/spotinst/spot-ansible-cloud-modules/blob/main/docs/examples/stateful_node/README.md)|Manage Azure Stateful Nodes
+[spot.cloud_modules.azure_elastigroup](https://github.com/spotinst/spot-ansible-cloud-modules/blob/main/docs/examples/elastigroup/README.md)|Manage Azure Elastigroups
 <!--end collection content-->
 
 ## Installing this collection
@@ -52,7 +53,7 @@ be manually installed using pip and from the collection project's root, running:
     pip install requirements.txt
 or:
 
-    pip install spotinst_sdk2>=2.1.29
+    pip install spotinst_sdk2>=2.1.30
 
 ## Using this collection
 
