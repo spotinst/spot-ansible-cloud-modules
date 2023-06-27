@@ -14,7 +14,8 @@ version_added: 1.1.0
 short_description: Create, update or delete Spot Azure Stateful Nodes
 author: Spot by NetApp (@anuragsharma-123)
 description: >
-    Create, update, delete or perform actions (pause, resume, recycle) on Spot Azure Stateful Nodes.
+    Create, update, delete, import or perform actions (pause, resume, recycle) on Spot Azure 
+    Stateful Nodes.
     You will have to have a credentials file in this location - <home>/.spotinst/credentials
     The credentials file must contain a row that looks like this
     token = <YOUR TOKEN>
@@ -50,9 +51,7 @@ options:
     vm_id:
         type: str
         description:
-            - "The Stateful Node ID if it already exists and you want to update or delete it."
-            - "This will have no effect unless the `uniqueness_by` field is set to ID."
-            - "When this is set, and the `uniqueness_by` field is set, the node will either be updated or deleted, but not created."
+            - "When state is `present` and vm_id is set, the VM will be imported as per the `import_vm_config` specification"
     uniqueness_by:
         type: str
         choices:
@@ -145,6 +144,7 @@ options:
                     resource_group_name:
                         type: str
                         description: "Name of the Resource Group for Stateful Node."
+                        required: true
                     resource_retention_time:
                         type: int
                         description: "Time in hours to delete the original resources after the import has finished"
@@ -765,7 +765,7 @@ def get_client(module):
     else:
         session = spotinst.SpotinstSession(auth_token=token)
 
-    client = session.client("stateful_node_azure", log_level = "debug")
+    client = session.client("stateful_node_azure", log_level="debug")
 
     return client
 
@@ -804,7 +804,7 @@ def turn_to_model(content, field_name: str, curr_path=None):
 
 
 def find_ssn_with_same_name(stateful_nodes, name):
-    ret_val = []
+    ret_val=[]
     for node in stateful_nodes:
         if node["name"] == name:
             ret_val.append(node)
@@ -1012,8 +1012,8 @@ def handle_import_stateful_node(client, ssn_models, module):
 
     try:
         if import_vm_config is not None:
-            res: dict = client.get_stateful_node_from_azure_vm(resource_group_name = import_vm_config["resource_group_name"],
-                                                            virtual_machine_name = import_vm_config["original_vm_name"])
+            res: dict = client.get_stateful_node_from_azure_vm(resource_group_name=import_vm_config["resource_group_name"],
+                                                            virtual_machine_name=import_vm_config["original_vm_name"])
             import_ssn_config = res
             has_changed = True
             message = "VM configuration read successfully."
@@ -1038,13 +1038,13 @@ def handle_import_stateful_node(client, ssn_models, module):
         else:
             resource_retention_time = None
 
-        import_vm_config_obj = ssn_models.ImportVmConfiguration(draining_timeout = draining_timeout,
-                                                                node = import_ssn_config,
-                                                                original_vm_name = import_vm_config["original_vm_name"],
-                                                                resource_group_name = import_vm_config["resource_group_name"],
-                                                                resource_retention_time = resource_retention_time)
+        import_vm_config_obj = ssn_models.ImportVmConfiguration(draining_timeout=draining_timeout,
+                                                                node=import_ssn_config,
+                                                                original_vm_name=import_vm_config["original_vm_name"],
+                                                                resource_group_name=import_vm_config["resource_group_name"],
+                                                                resource_retention_time=resource_retention_time)
 
-        res: dict = client.import_vm_to_stateful_node(import_vm_config_obj)
+        res: dict = client.import_vm_to_stateful_node(import_vm_configuration=import_vm_config_obj)
         stateful_import_id = res.get("stateful_import_id")
         message = "VM configuration imported to stateful node successfully"
         has_changed = True

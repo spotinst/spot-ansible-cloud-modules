@@ -1,45 +1,55 @@
 ancestor: null
 releases:
+  1.3.0:
+    changes:
+      release_summary: Adding ability to create Azure Stateful Node by importing a VM.
+    fragments:
+      - 1-3-0-summary.yml
+    modules:
+      - description: Create, update, delete or Import Spot Azure Stateful Nodes
+        name: azure_stateful_node
+        namespace: ''
+    release_date: '2023-06-26'
   1.2.0:
     changes:
       release_summary: Adding Azure Elastigroups support in spot.cloud_modules collection.
     fragments:
-    - 1-2-0-summary.yml
+      - 1-2-0-summary.yml
     modules:
-    - description: Create, update or delete Spot Azure Elastigroups
-      name: azure_elastigroup
-      namespace: ''
+      - description: Create, update or delete Spot Azure Elastigroups
+        name: azure_elastigroup
+        namespace: ''
     release_date: '2023-03-30'
   1.1.0:
     changes:
       release_summary: Adding Azure Stateful Node support in spot.cloud_modules collection.
     fragments:
-    - 1-1-0-summary.yml
+      - 1-1-0-summary.yml
     modules:
-    - description: Create, update or delete Spot Azure Stateful Nodes
-      name: azure_stateful_node
-      namespace: ''
+      - description: Create, update or delete Spot Azure Stateful Nodes
+        name: azure_stateful_node
+        namespace: ''
     release_date: '2023-03-29'
   1.0.0:
     changes:
       release_summary: New collection - adding all existing modules.
     fragments:
-    - 1-0-0-summary.yml
-    - 3641626-adjust-tests.yml
+      - 1-0-0-summary.yml
+      - 3641626-adjust-tests.yml
     modules:
-    - description: Manage (Create, Update, Delete) Spot AWS Elastigroups
-      name: aws_elastigroup
-      namespace: ''
-    - description: Create, update or delete Spot AWS Managed Instances
-      name: aws_managed_instance
-      namespace: ''
-    - description: Create, update or delete Spot MRScaler
-      name: aws_mrscaler
-      namespace: ''
-    - description: Create, update or delete Spot Ocean K8s
-      name: aws_ocean_k8s
-      namespace: ''
-    - description: Create event subscription for resource
-      name: event_subscription
-      namespace: ''
+      - description: Manage (Create, Update, Delete) Spot AWS Elastigroups
+        name: aws_elastigroup
+        namespace: ''
+      - description: Create, update or delete Spot AWS Managed Instances
+        name: aws_managed_instance
+        namespace: ''
+      - description: Create, update or delete Spot MRScaler
+        name: aws_mrscaler
+        namespace: ''
+      - description: Create, update or delete Spot Ocean K8s
+        name: aws_ocean_k8s
+        namespace: ''
+      - description: Create event subscription for resource
+        name: event_subscription
+        namespace: ''
     release_date: '2021-12-14'

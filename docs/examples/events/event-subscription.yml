@@ -1,17 +1,17 @@
-#In this basic example, we create an event subscription
+# In this basic example, we create an event subscription
 
 - hosts: localhost
   tasks:
     - name: create event subscription
       spot.cloud_modules.event_subscription:
-        account_id: 
-        token: 
+        account_id:
+        token:
         state: present
         id: sis-e62dfd0f
         resource_id: sig-992a78db
         protocol: web
         endpoint: https://webhook.com
         event_type: GROUP_UPDATED
-        event_format: { "subject" : "%s", "message" : "%s" }
+        event_format: {"subject": "%s", "message": "%s"}
       register: result
     - debug: var=result
