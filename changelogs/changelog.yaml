@@ -9,7 +9,7 @@ releases:
       - description: Create, update, delete or Import Spot Azure Stateful Nodes
         name: azure_stateful_node
         namespace: ''
-    release_date: '2023-06-26'
+    release_date: '2023-07-12'
   1.2.0:
     changes:
       release_summary: Adding Azure Elastigroups support in spot.cloud_modules collection.

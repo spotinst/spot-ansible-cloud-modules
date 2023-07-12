@@ -51,7 +51,7 @@ options:
     vm_id:
         type: str
         description:
-            - "When state is `present` and vm_id is set, the VM will be imported as per the `import_vm_config` specification"
+            - "When state is `present` and vm_id is set, the VM defined in `import_vm_config` specification will be imported."
     uniqueness_by:
         type: str
         choices:
@@ -989,8 +989,8 @@ def handle_create_stateful_node(client, stateful_node_module_copy, module):
         has_changed = True
     except SpotinstClientException as exc:
         message = f"Failed creating stateful node, error: {exc.message}"
-        module.fail_json(msg=message)
         has_changed = False
+        module.fail_json(msg=message)
     
     return has_changed, stateful_node_id, message
 
@@ -1019,13 +1019,13 @@ def handle_import_stateful_node(client, ssn_models, module):
             message = "VM configuration read successfully."
         else:
             message = "Couldn't find import configuration."
-            module.fail_json(msg=message)
             has_changed = False
+            module.fail_json(msg=message)
 
     except SpotinstClientException as exc:
         message = f"Failed importing VM configuration, error: {exc.message}"
-        module.fail_json(msg=message)
         has_changed = False
+        module.fail_json(msg=message)
 
     try:
         if "draining_timeout" in import_vm_config:
@@ -1051,8 +1051,8 @@ def handle_import_stateful_node(client, ssn_models, module):
 
     except SpotinstClientException as exc:
         message = f"Failed importing VM to stateful node, error: {exc.message}"
-        module.fail_json(msg=message)
         has_changed = False
+        module.fail_json(msg=message)
 
     try:
         res: dict = client.get_stateful_node_import_status(import_id = stateful_import_id)
@@ -1063,8 +1063,8 @@ def handle_import_stateful_node(client, ssn_models, module):
 
     except SpotinstClientException as exc:
         message = f"Couldn't retrieve status of stateful node being imported, error: {exc.message}"
-        module.fail_json(msg=message)
         has_changed = False
+        module.fail_json(msg=message)
 
     return has_changed, stateful_node_id, message
 
