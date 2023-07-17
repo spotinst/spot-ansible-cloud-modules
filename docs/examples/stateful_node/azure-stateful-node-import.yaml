@@ -1,0 +1,20 @@
+- hosts: localhost
+  tasks:
+    - name: stateful_node
+      spot.cloud_modules.azure_stateful_node:
+        state: present   # absent = delete, present = create/update/import
+        uniqueness_by: "id"
+        vm_id: "vm-for-import-using-ansible"   # Provide this field to trigger import workflow
+        do_not_update:
+          - region
+          - resource_group_name
+        stateful_node_config:
+          import_vm_config:                      # Import configuration
+            draining_timeout: 120
+            original_vm_name: "vm-for-import-using-ansible"
+            resource_group_name: "AutomationResourceGroup"
+            resource_retention_time: 2
+        stateful_node:
+
+     register: result
+    - debug: var=result

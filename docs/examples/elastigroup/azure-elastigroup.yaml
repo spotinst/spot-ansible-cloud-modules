@@ -21,7 +21,7 @@
             health_check_types: ["vmState"]
             auto_healing: false
             grace_period: 300
-            unhealthy_duration: 120           
+            unhealthy_duration: 120
           scheduling:
             tasks:
               - is_enabled: true
@@ -38,12 +38,12 @@
               - timeout: 180
                 type: "vmReady"
               - timeout: 210
-                type: "vmReadyToShutdown"  
+                type: "vmReadyToShutdown"
           compute:
             os: "Linux"
             zones: ["1", "2", "3"]
             preferred_zones: ["1", "2"]
-            vm_sizes: 
+            vm_sizes:
               od_sizes: ["standard_ds1_v2", "standard_ds2_v2"]
               spot_sizes: ["standard_ds1_v2", "standard_ds2_v2"]
               preferred_spot_sizes: ["standard_ds1_v2"]
