@@ -1,4 +1,4 @@
-# In this basic example, we create a rancher integrated elastigroup
+#In this basic example, we create a rancher integrated elastigroup
 
 - hosts: localhost
   tasks:
@@ -17,7 +17,7 @@
         min_size: 0
         target: 0
         unit: instance
-        monitoring: false
+        monitoring: False
         on_demand_instance_type: m4.large
         product: Linux/UNIX
         tags:
@@ -58,3 +58,4 @@
               evaluation_periods: 3
       register: result
     - debug: var=result
+ 

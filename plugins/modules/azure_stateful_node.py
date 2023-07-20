@@ -14,8 +14,7 @@ version_added: 1.1.0
 short_description: Create, update or delete Spot Azure Stateful Nodes
 author: Spot by NetApp (@anuragsharma-123)
 description: >
-    Create, update, delete, import or perform actions (pause, resume, recycle) on Spot Azure 
-    Stateful Nodes.
+    Create, update, delete or perform actions (pause, resume, recyce) on Spot Azure Stateful Nodes.
     You will have to have a credentials file in this location - <home>/.spotinst/credentials
     The credentials file must contain a row that looks like this
     token = <YOUR TOKEN>
@@ -48,10 +47,6 @@ options:
             - "The Stateful Node ID if it already exists and you want to update or delete it."
             - "This will have no effect unless the `uniqueness_by` field is set to ID."
             - "When this is set, and the `uniqueness_by` field is set, the node will either be updated or deleted, but not created."
-    vm_id:
-        type: str
-        description:
-            - "When state is `present` and vm_id is set, the VM defined in `import_vm_config` specification will be imported."
     uniqueness_by:
         type: str
         choices:
@@ -130,24 +125,6 @@ options:
                             should_terminate_vm:
                                 type: bool
                                 description: "Indicates whether to delete the stateful node's VM."
-            import_vm_config:
-                type: dict
-                description: "Configurations for importing a VM to a stateful node"
-                suboptions:
-                    draining_timeout:
-                        type: int
-                        description: "Time in seconds before shutdown incase of load balancing."
-                    original_vm_name:
-                        type: str
-                        description: "Azure Import Stateful Node Name."
-                        required: true
-                    resource_group_name:
-                        type: str
-                        description: "Name of the Resource Group for Stateful Node."
-                        required: true
-                    resource_retention_time:
-                        type: int
-                        description: "Time in hours to delete the original resources after the import has finished"
     stateful_node:
         type: dict
         description: "Describe the desired properties of the stateful node under this object."
@@ -703,8 +680,7 @@ CLS_NAME_BY_ATTR_NAME = {
     "stateful_node.compute.launch_specification.secrets": "Secret",
     "stateful_node.compute.launch_specification.tags": "Tag",
     "stateful_node.strategy.signals": "Signal",
-    "stateful_node.scheduling.tasks": "SchedulingTask",
-    "stateful_node_config.import_vm_config": "ImportVmConfiguration"
+    "stateful_node.scheduling.tasks": "SchedulingTask"
 }
 
 LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
@@ -765,7 +741,7 @@ def get_client(module):
     else:
         session = spotinst.SpotinstSession(auth_token=token)
 
-    client = session.client("stateful_node_azure", log_level="debug")
+    client = session.client("stateful_node_azure")
 
     return client
 
@@ -804,7 +780,7 @@ def turn_to_model(content, field_name: str, curr_path=None):
 
 
 def find_ssn_with_same_name(stateful_nodes, name):
-    ret_val=[]
+    ret_val = []
     for node in stateful_nodes:
         if node["name"] == name:
             ret_val.append(node)
@@ -839,17 +815,13 @@ def get_id_and_operation(client, state: str, module):
     operation, id = None, None
     uniqueness_by = module.custom_params.get("uniqueness_by")
     manually_provided_ssn_id = module.custom_params.get("id")
-    manually_provided_vm_id = module.custom_params.get("vm_id")
     stateful_node = module.custom_params.get("stateful_node")
 
     if state == "present":
 
         if uniqueness_by == "id":
-            if manually_provided_ssn_id is None and manually_provided_vm_id is None:
+            if manually_provided_ssn_id is None:
                 operation = "create"
-            elif manually_provided_ssn_id is None and manually_provided_vm_id is not None:
-                id = manually_provided_vm_id
-                operation = "import"
             else:
                 id = manually_provided_ssn_id
                 operation = "update"
@@ -904,13 +876,11 @@ def handle_stateful_node(client, module):
     operation, ssn_id = get_id_and_operation(client, state, module)
 
     if operation == "create":
-        has_changed, stateful_node_id, message = handle_create_stateful_node(client, stateful_node_module_copy, module)
-    elif operation == "import":
-        has_changed, stateful_node_id, message = handle_import_stateful_node(client, ssn_models, module)
+        has_changed, stateful_node_id, message = handle_create_stateful_node(client, stateful_node_module_copy)
     elif operation == "update":
         has_changed, stateful_node_id, message = handle_update_stateful_node(client, stateful_node_module_copy, ssn_id, module)
     elif operation == "delete":
-        has_changed, stateful_node_id, message = handle_delete_stateful_node(client, ssn_id, module)
+        has_changed, stateful_node_id, message = handle_delete_stateful_node(client, ssn_id, ssn_models, module)
     else:
         module.fail_json(changed=False, msg=f"Unknown operation {operation} - "
                                             f"this is probably a bug in the module's code: please report")
@@ -919,11 +889,11 @@ def handle_stateful_node(client, module):
     return stateful_node_id, message, has_changed
 
 
-def handle_delete_stateful_node(client, ssn_id, module):
+def handle_delete_stateful_node(client, ssn_id, ssn_models, module):
     stateful_node_id = ssn_id
     delete_args = dict(node_id=stateful_node_id)
 
-    handle_deletion_config(delete_args, module)
+    handle_deletion_config(delete_args, ssn_models, module)
 
     try:
         client.delete_stateful_node(**delete_args)
@@ -932,6 +902,7 @@ def handle_delete_stateful_node(client, ssn_id, module):
     except SpotinstClientException as exc:
         if "STATEFUL_NODE_DOES_NOT_EXIST" in exc.message:
             message = f"Failed deleting stateful node - Stateful Node with ID {stateful_node_id} doesn't exist"
+            module.fail_json(changed=False, msg=message)
         else:
             message = f"Failed deleting stateful node (ID: {stateful_node_id}), error: {exc.message}"
             module.fail_json(msg=message)
@@ -973,103 +944,19 @@ def handle_update_stateful_node(client, stateful_node_module_copy, ssn_id, modul
     return has_changed, stateful_node_id, message
 
 
-def handle_create_stateful_node(client, stateful_node_module_copy, module):
-    has_changed = False
-    stateful_node_id = None
-    message = None
+def handle_create_stateful_node(client, stateful_node_module_copy):
+    ami_sdk_object = turn_to_model(
+        stateful_node_module_copy, "stateful_node"
+    )
 
-    try:
-        ami_sdk_object = turn_to_model(
-            stateful_node_module_copy, "stateful_node"
-        )
-
-        res: dict = client.create_stateful_node(node=ami_sdk_object)
-        stateful_node_id = res["id"]
-        message = "Stateful node created successfully"
-        has_changed = True
-    except SpotinstClientException as exc:
-        message = f"Failed creating stateful node, error: {exc.message}"
-        has_changed = False
-        module.fail_json(msg=message)
-    
+    res: dict = client.create_stateful_node(node=ami_sdk_object)
+    stateful_node_id = res["id"]
+    message = "Stateful node created successfully"
+    has_changed = True
     return has_changed, stateful_node_id, message
 
 
-def handle_import_stateful_node(client, ssn_models, module):
-    has_changed = False
-    stateful_import_id = None
-    stateful_node_id = None
-    message = None
-
-    import_vm_config = None
-    import_ssn_config = None
-
-    # Reading the Import Configuration
-    ssn_config = module.custom_params.get("stateful_node_config")
-
-    if ssn_config is not None:
-        import_vm_config = ssn_config.get("import_vm_config")
-
-    try:
-        if import_vm_config is not None:
-            res: dict = client.get_stateful_node_from_azure_vm(resource_group_name=import_vm_config["resource_group_name"],
-                                                            virtual_machine_name=import_vm_config["original_vm_name"])
-            import_ssn_config = res
-            has_changed = True
-            message = "VM configuration read successfully."
-        else:
-            message = "Couldn't find import configuration."
-            has_changed = False
-            module.fail_json(msg=message)
-
-    except SpotinstClientException as exc:
-        message = f"Failed importing VM configuration, error: {exc.message}"
-        has_changed = False
-        module.fail_json(msg=message)
-
-    try:
-        if "draining_timeout" in import_vm_config:
-            draining_timeout = import_vm_config["draining_timeout"]
-        else:
-            draining_timeout = None
-        
-        if "resource_retention_time" in import_vm_config:
-            resource_retention_time = import_vm_config["resource_retention_time"]
-        else:
-            resource_retention_time = None
-
-        import_vm_config_obj = ssn_models.ImportVmConfiguration(draining_timeout=draining_timeout,
-                                                                node=import_ssn_config,
-                                                                original_vm_name=import_vm_config["original_vm_name"],
-                                                                resource_group_name=import_vm_config["resource_group_name"],
-                                                                resource_retention_time=resource_retention_time)
-
-        res: dict = client.import_vm_to_stateful_node(import_vm_configuration=import_vm_config_obj)
-        stateful_import_id = res.get("stateful_import_id")
-        message = "VM configuration imported to stateful node successfully"
-        has_changed = True
-
-    except SpotinstClientException as exc:
-        message = f"Failed importing VM to stateful node, error: {exc.message}"
-        has_changed = False
-        module.fail_json(msg=message)
-
-    try:
-        res: dict = client.get_stateful_node_import_status(import_id = stateful_import_id)
-        state = res["items"][0]["state"]
-        stateful_node_id = res["items"][0]["stateful_node_id"]
-        message = f"Stateful node import started successfully, current state is: {state}"
-        has_changed = True
-
-    except SpotinstClientException as exc:
-        message = f"Couldn't retrieve status of stateful node being imported, error: {exc.message}"
-        has_changed = False
-        module.fail_json(msg=message)
-
-    return has_changed, stateful_node_id, message
-
-
-def handle_deletion_config(delete_args, module):
+def handle_deletion_config(delete_args, ssn_models, module):
     ssn_config = module.custom_params.get("stateful_node_config")
 
     if ssn_config is not None:
@@ -1354,16 +1241,8 @@ def main():
         deallocation_config=dict(type="dict", options=deallocation_config_fields)
     )
 
-    import_vm_config_fields = dict(
-        draining_timeout=dict(type="int"),
-        original_vm_name=dict(type="str"),
-        resource_group_name=dict(type="str"),
-        resource_retention_time=dict(type="int"),
-    )
-
     stateful_node_config_fields = dict(
-        deletion_config=dict(type="dict", options=deletion_config_fields),
-        import_vm_config=dict(type="dict", options=import_vm_config_fields)
+        deletion_config=dict(type="dict", options=deletion_config_fields)
     )
 
     fields = dict(
@@ -1377,7 +1256,6 @@ def main():
             type="str", fallback=(env_fallback, ["SPOTINST_ACCOUNT_ID", "ACCOUNT"])
         ),
         id=dict(type="str"),
-        vm_id=dict(type="str"),
         uniqueness_by=dict(type="str", choices=["id", "name"], default="name"),
         do_not_update=dict(type="list", elements="str"),
         # endregion

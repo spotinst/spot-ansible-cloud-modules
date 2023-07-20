@@ -49,12 +49,3 @@ New Modules
 -----------
 
 - spot.cloud_modules.azure_elastigroup - Manage (Create, Update, Delete) Azure Elastigroups
-
-
-v1.3.0
-======
-
-Release Summary
----------------
-
-Adding support to create Azure Stateful Node by Importing an Azure VM.

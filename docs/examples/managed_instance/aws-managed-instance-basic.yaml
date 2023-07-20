@@ -26,7 +26,7 @@
             launch_specification:
               image_id: "ami-082b5a644766e0e6f"
               instance_types:
-                types: ["t2.micro", "t3.small", "t3.micro"]
+                types: [ "t2.micro", "t3.small", "t3.micro" ]
                 preferred_type: "t2.micro"
               key_pair: "my-keypair"
               security_group_ids:

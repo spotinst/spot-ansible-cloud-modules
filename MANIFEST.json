@@ -1,0 +1,40 @@
+{
+ "collection_info": {
+  "namespace": "spot",
+  "name": "cloud_modules",
+  "version": "1.2.0",
+  "authors": [
+   "Shibel - Spot by NetApp <shibel@netapp.com>",
+   "Noam - Spot by NetApp <noam.stern@netapp.com>",
+   "Ziv - Spot by NetApp <ziv.messing@netapp.com>",
+   "Anurag - Spot by NetApp <anurag.sharma@netapp.com>"
+  ],
+  "readme": "README.md",
+  "tags": [
+   "cloud",
+   "netapp",
+   "aws",
+   "emr",
+   "ec2",
+   "infrastructure",
+   "spot",
+   "azure"
+  ],
+  "description": "Manage your Spot resources with Ansible",
+  "license": [],
+  "license_file": "LICENSE.txt",
+  "dependencies": {},
+  "repository": "https://github.com/spotinst/spot-ansible-cloud-modules",
+  "documentation": "https://github.com/spotinst/spot-ansible-cloud-modules",
+  "homepage": "https://github.com/spotinst/spot-ansible-cloud-modules",
+  "issues": "https://github.com/spotinst/spot-ansible-cloud-modules/issues"
+ },
+ "file_manifest_file": {
+  "name": "FILES.json",
+  "ftype": "file",
+  "chksum_type": "sha256",
+  "chksum_sha256": "3975f1a6788f20f34016c6217d235a25c4c23b2a5e7878e3c9a41051a31e94e5",
+  "format": 1
+ },
+ "format": 1
+}
