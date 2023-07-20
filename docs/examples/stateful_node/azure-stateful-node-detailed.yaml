@@ -6,7 +6,7 @@
         uniqueness_by: "id"
         do_not_update:
           - region
-          - resource_group_name        
+          - resource_group_name
         stateful_node:
           name: "ansible-stateful-node-example"
           description: "a sample Stateful Node created via Ansible"
@@ -30,7 +30,7 @@
                 type: "pause"
               - is_enabled: false
                 cron_expression: "* * * 2 *"
-                type: "resume"                
+                type: "resume"
           strategy:
             draining_timeout: 300
             fallback_to_od: true
@@ -41,12 +41,12 @@
               - timeout: 180
                 type: "vmReady"
               - timeout: 210
-                type: "vmReadyToShutdown"  
+                type: "vmReadyToShutdown"
           compute:
             os: "Linux"
             zones: ["1", "2"]
             preferred_zone: "2"
-            vm_sizes: 
+            vm_sizes:
               od_sizes: ["standard_a1_v2", "standard_a2_v2"]
               spot_sizes: ["standard_a1_v2", "standard_a2_v2"]
               preferred_spot_sizes: ["standard_a1_v2"]

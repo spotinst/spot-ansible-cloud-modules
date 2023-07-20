@@ -1,11 +1,11 @@
-#Integrate and Spotinst elastigroup with EMR Cluster
+# Integrate and Spotinst elastigroup with EMR Cluster
 
 - hosts: localhost
   tasks:
     - name: create emr mr scaler
       spot.cloud_modules.aws_mrscaler:
-        account_id: 
-        token: 
+        account_id:
+        token:
         state: present
         name: ansible_test_group
         description: this is from ansible
@@ -34,19 +34,19 @@
             task_group:
               instance_types:
                 - m3.xlarge
-              capacity: 
+              capacity:
                 minimum: 0
                 maximum: 0
                 target: 0
               life_cycle: SPOT
           emr_managed_master_security_group: sg-8cfb40f6
           emr_managed_slave_security_group: sg-f2f94288
-          additional_master_security_groups: 
+          additional_master_security_groups:
             - sg-f2f94288
           additional_slave_security_groups:
             - sg-8cfb40f6
           ec2_key_name: Noam-key
-          applications: 
+          applications:
             - name: Ganglia
               version: "1.0"
             - name: Hadoop
