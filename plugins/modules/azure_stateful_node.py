@@ -14,7 +14,7 @@ version_added: 1.1.0
 short_description: Create, update or delete Spot Azure Stateful Nodes
 author: Spot by NetApp (@anuragsharma-123)
 description: >
-    Create, update, delete, import or perform actions (pause, resume, recycle) on Spot Azure 
+    Create, update, delete, import or perform actions (pause, resume, recycle) on Spot Azure
     Stateful Nodes.
     You will have to have a credentials file in this location - <home>/.spotinst/credentials
     The credentials file must contain a row that looks like this
@@ -804,7 +804,7 @@ def turn_to_model(content, field_name: str, curr_path=None):
 
 
 def find_ssn_with_same_name(stateful_nodes, name):
-    ret_val=[]
+    ret_val = []
     for node in stateful_nodes:
         if node["name"] == name:
             ret_val.append(node)
@@ -887,9 +887,7 @@ def get_id_and_operation(client, state: str, module):
                 msg = f"Failed deleting stateful node - 'uniqueness_by' is set to 'name' but there's more than one stateful node with the name '{name}'"
                 module.fail_json(changed=False, msg=msg)
             elif len(nodes_with_name) == 0:
-                msg = f"Failed deleting stateful node - 'uniqueness_by' is set to 'name' but there is no stateful node with the name '{name}'"
-                module.fail_json(changed=False, msg=msg)
-
+                id = None
     else:
         msg = f"Spot Ansible Module error: got unknown state {state}"
         module.fail_json(changed=False, msg=msg)
@@ -926,9 +924,14 @@ def handle_delete_stateful_node(client, ssn_id, module):
     handle_deletion_config(delete_args, module)
 
     try:
-        client.delete_stateful_node(**delete_args)
-        message = f"Stateful node {stateful_node_id} deleted successfully"
-        has_changed = True
+        # 'id' will be 'None' when delete operation by name is triggered and stateful node doesn't exist
+        if stateful_node_id is None:
+            message = "Failed deleting stateful node - Stateful Node doesn't exist"
+            has_changed = False
+        else:
+            client.delete_stateful_node(**delete_args)
+            message = f"Stateful node {stateful_node_id} deleted successfully"
+            has_changed = True
     except SpotinstClientException as exc:
         if "STATEFUL_NODE_DOES_NOT_EXIST" in exc.message:
             message = f"Failed deleting stateful node - Stateful Node with ID {stateful_node_id} doesn't exist"
@@ -991,7 +994,7 @@ def handle_create_stateful_node(client, stateful_node_module_copy, module):
         message = f"Failed creating stateful node, error: {exc.message}"
         has_changed = False
         module.fail_json(msg=message)
-    
+
     return has_changed, stateful_node_id, message
 
 
@@ -1032,7 +1035,7 @@ def handle_import_stateful_node(client, ssn_models, module):
             draining_timeout = import_vm_config["draining_timeout"]
         else:
             draining_timeout = None
-        
+
         if "resource_retention_time" in import_vm_config:
             resource_retention_time = import_vm_config["resource_retention_time"]
         else:

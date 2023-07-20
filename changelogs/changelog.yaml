@@ -1,5 +1,15 @@
 ancestor: null
 releases:
+  1.3.1:
+    changes:
+      release_summary: Making delete operation idempotent
+    fragments:
+      - 1-3-1-summary.yml
+    modules:
+      - description: Create, update, delete or Import Spot Azure Stateful Nodes
+        name: azure_stateful_node
+        namespace: ''
+    release_date: '2023-07-20'
   1.3.0:
     changes:
       release_summary: Adding ability to create Azure Stateful Node by importing a VM.

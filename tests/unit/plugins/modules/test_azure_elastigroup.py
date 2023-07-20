@@ -252,7 +252,7 @@ class TestTurnToModel(unittest.TestCase):
 
         expected_network = Network(resource_group_name="AutomationResourceGroup",
                                    virtual_network_name="Automation-VirtualNetwork",
-                                   network_interfaces=[NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard", 
+                                   network_interfaces=[NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard",
                                                                         subnet_name="Automation-PrivateSubnet", enable_ip_forwarding=True)])
 
         actual_network = eg.compute.launch_specification.network
