@@ -58,3 +58,17 @@ Release Summary
 ---------------
 
 Adding support to create Azure Stateful Node by Importing an Azure VM.
+
+
+v1.3.1
+======
+
+Release Summary
+---------------
+
+Made delete operation idempotent for azure_stateful_node
+
+Bugfixes
+--------
+
+- spot.cloud_modules.azure_stateful_node - When 'delete by name' operation is triggered for a non-existent node, return success, not exception.
