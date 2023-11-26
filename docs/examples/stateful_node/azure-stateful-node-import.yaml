@@ -9,11 +9,12 @@
           - region
           - resource_group_name
         stateful_node_config:
-          import_vm_config:                      # Import configuration
+          import_vm_config:                    # Import configuration
             draining_timeout: 120
             original_vm_name: "vm-for-import-using-ansible"
             resource_group_name: "AutomationResourceGroup"
             resource_retention_time: 2
+            convert_unmanaged_disks: false
         stateful_node:
 
      register: result
