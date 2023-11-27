@@ -53,7 +53,7 @@ be manually installed using pip and from the collection project's root, running:
     pip install requirements.txt
 or:
 
-    pip install spotinst_sdk2>=2.1.30
+    pip install spotinst_sdk2>=2.3.0
 
 ## Using this collection
 

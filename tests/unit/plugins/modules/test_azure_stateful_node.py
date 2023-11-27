@@ -62,14 +62,14 @@ class TestTurnToModel(unittest.TestCase):
                     'is_enabled': True,
                     'cron_expression': '* * * 1 *',
                     'type': 'pause'
-                },
-                {
+                }, {
                     'is_enabled': False,
                     'cron_expression': '* * * 3 *',
                     'type': 'resume'
                 }]
             },
             'strategy': {
+                'availability_vs_cost': 75,
                 'draining_timeout': 100,
                 'fallback_to_od': True,
                 'preferred_lifecycle': 'spot',
@@ -79,8 +79,7 @@ class TestTurnToModel(unittest.TestCase):
                 'signals': [{
                     'timeout': 180,
                     'type': 'vmReady'
-                },
-                {
+                }, {
                     'timeout': 210,
                     'type': 'vmReadyToShutdown'
                 }]
@@ -104,8 +103,7 @@ class TestTurnToModel(unittest.TestCase):
                         'lun': 0,
                         'size_g_b': 30,
                         'type': 'Standard_LRS'
-                    },
-                    {
+                    }, {
                         'lun': 1,
                         'size_g_b': 32,
                         'type': 'StandardSSD_LRS'
@@ -141,8 +139,7 @@ class TestTurnToModel(unittest.TestCase):
                     'tags': [{
                         'tag_key': 'Creator',
                         'tag_value': 'Ansible Test'
-                    },
-                    {
+                    }, {
                         'tag_key': 'Name',
                         'tag_value': 'Ansible Detailed Example'
                     }]
@@ -206,12 +203,13 @@ class TestTurnToModel(unittest.TestCase):
         self.assertEqual(actual_scheduling.tasks[1].type, expected_scheduling.tasks[1].type)
 
         # test strategy
-        expected_strategy = Strategy(draining_timeout=100, fallback_to_od=True, preferred_lifecycle="spot",
+        expected_strategy = Strategy(availability_vs_cost=75, draining_timeout=100, fallback_to_od=True, preferred_lifecycle="spot",
                                      revert_to_spot=RevertToSpot(perform_at="always"),
                                      signals=[Signal(timeout=180, type="vmReady"), Signal(timeout=210, type="vmReadyToShutdown")])
 
         actual_strategy = ssn.strategy
 
+        self.assertEqual(actual_strategy.availability_vs_cost, expected_strategy.availability_vs_cost)
         self.assertEqual(actual_strategy.draining_timeout, expected_strategy.draining_timeout)
         self.assertEqual(actual_strategy.fallback_to_od, expected_strategy.fallback_to_od)
         self.assertEqual(actual_strategy.preferred_lifecycle, expected_strategy.preferred_lifecycle)
@@ -242,7 +240,7 @@ class TestTurnToModel(unittest.TestCase):
         self.assertEqual(ssn.compute.launch_specification.custom_data, "VGhpcyBpcyBjdXN0b20gZGF0YSBmaWVsZA==")
 
         expected_datadisks = [DataDisk(lun=0, size_g_b=30, type="Standard_LRS"),
-                            DataDisk(lun=1, size_g_b=32, type="StandardSSD_LRS")]
+                              DataDisk(lun=1, size_g_b=32, type="StandardSSD_LRS")]
 
         actual_datadisks = ssn.compute.launch_specification.data_disks
         self.assertEqual(len(actual_datadisks), len(expected_datadisks))
@@ -270,8 +268,8 @@ class TestTurnToModel(unittest.TestCase):
 
         expected_network = Network(resource_group_name="AutomationResourceGroup",
                                    virtual_network_name="Automation-VirtualNetwork",
-                                    network_interfaces=[NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard",
-                                                                         subnet_name="Automation-PrivateSubnet", enable_ip_forwarding=True)])
+                                   network_interfaces=[NetworkInterface(is_primary=True, assign_public_ip=True, public_ip_sku="Standard",
+                                                                        subnet_name="Automation-PrivateSubnet", enable_ip_forwarding=True)])
 
         actual_network = ssn.compute.launch_specification.network
 

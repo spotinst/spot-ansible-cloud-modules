@@ -163,22 +163,18 @@ options:
             name:
                 type: str
                 description: "The stateful node's name."
-                required: true
             region:
                 type: str
                 description: "The Azure region in which the Stateful Node will be launched."
-                required: true
             resource_group_name:
                 type: str
                 description: "The Azure resource group in which the VM and all of the subsequent subresources will be launched."
-                required: true
             description:
                 type: str
                 description: "optional description for the stateful node."
             persistence:
                 type: dict
                 description: Defines the persistence of the Stateful Node.
-                required: true
                 suboptions:
                     data_disks_persistence_mode:
                         type: str
@@ -239,7 +235,6 @@ options:
             strategy:
                 type: dict
                 description: "The strategy to launch the underlying VM and Spot behavior for the Stateful Node."
-                required: true
                 suboptions:
                     availability_vs_cost:
                         type: int
@@ -288,8 +283,7 @@ options:
                                 required: true
                     capacity_reservation:
                         type: dict
-                        description: On-demand Capacity Reservation group enables you to reserve Compute capacity in an Azure 
-                          region or an Availability Zone for any duration of time.
+                        description: Reserve Compute capacity in an Azure region or an Availability Zone for any duration of time.
                         suboptions:
                             capacity_reservation_groups:
                                 type: list
@@ -298,7 +292,7 @@ options:
                                 suboptions:
                                     name:
                                         type: str
-                                        description: "The name of the CRG".
+                                        description: "The name of the CRG."
                                         required: true
                                     resource_group_name:
                                         type: str
@@ -318,12 +312,10 @@ options:
             compute:
                 type: dict
                 description: "Defines the computational parameters to use when launch the VM for the Stateful Node."
-                required: true
                 suboptions:
                     os:
                         type: str
                         description: "Defines the type of the operating system. Valid Values: `Linux`, `Windows`"
-                        required: true
                     zones:
                         type: list
                         elements: str
@@ -353,7 +345,6 @@ options:
                     launch_specification:
                         type: dict
                         description: "Defines the launch specification of the VM."
-                        required: true
                         suboptions:
                             boot_diagnostics:
                                 type: dict
@@ -418,7 +409,6 @@ options:
                             image:
                                 type: dict
                                 description: "Defines the image with which the VM will be launched."
-                                required: true
                                 suboptions:
                                     custom:
                                         type: dict
@@ -543,7 +533,6 @@ options:
                             network:
                                 type: dict
                                 description: "Defines the network profile with which the VM will be launched."
-                                required: true
                                 suboptions:
                                     resource_group_name:
                                         type: str
@@ -698,7 +687,7 @@ options:
                                         description: "Specifies whether secure boot should be enabled on the virtual machine."
                                     security_type:
                                         type: str
-                                        description: "Security type refers to the different security features of a virtual machine. Valid values: `Standard`, `TrustedLaunch`."
+                                        description: "Refers to the different security features of a VM. Valid values: `Standard`, `TrustedLaunch`."
                                     v_tpm_enabled:
                                         type: bool
                                         description: "Specifies whether vTPM should be enabled on the virtual machine."
@@ -718,7 +707,7 @@ options:
                                         description: "Tag value for all resources."
                             user_data:
                                 type: str
-                                description: "Define a set of scripts or other metadata that's inserted to an Azure virtual machine at provision time. (Base64 encoded)"
+                                description: "Set of scripts or other metadata that's inserted to an Azure VM at provision time. (Base64 encoded)"
                             vm_name:
                                 type: str
                                 description: "Set a VM name that will be persisted throughout the entire node lifecycle."
@@ -839,8 +828,8 @@ CLS_NAME_BY_ATTR_NAME = {
     "stateful_node.compute.launch_specification.secrets": "Secret",
     "stateful_node.compute.launch_specification.tags": "Tag",
     "stateful_node.strategy.signals": "Signal",
-    "stateful_node.scheduling.tasks": "SchedulingTask",
     "stateful_node.strategy.capacity_reservation.capacity_reservation_groups": "CapacityReservationGroups",
+    "stateful_node.scheduling.tasks": "SchedulingTask",
     "stateful_node_config.import_vm_config": "ImportVmConfiguration"
 }
 
@@ -848,6 +837,7 @@ LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
     "stateful_node.compute.launch_specification.load_balancers_config.load_balancers": "LoadBalancer",
     "stateful_node.compute.launch_specification.network.network_interfaces.application_security_groups": "ApplicationSecurityGroup",
     "stateful_node.compute.launch_specification.network.network_interfaces.additional_ip_configurations": "AdditionalIpConfiguration",
+    "stateful_node.compute.launch_specification.network.network_interfaces.public_ips": "PublicIp",
     "stateful_node.compute.launch_specification.secrets.vault_certificates": "VaultCertificate"
 }
 
@@ -1153,7 +1143,7 @@ def handle_import_stateful_node(client, ssn_models, module):
     try:
         if import_vm_config is not None:
             res: dict = client.get_stateful_node_from_azure_vm(resource_group_name=import_vm_config["resource_group_name"],
-                                                            virtual_machine_name=import_vm_config["original_vm_name"])
+                                                               virtual_machine_name=import_vm_config["original_vm_name"])
             import_ssn_config = res
             has_changed = True
             message = "VM configuration read successfully."
@@ -1201,7 +1191,7 @@ def handle_import_stateful_node(client, ssn_models, module):
         module.fail_json(msg=message)
 
     try:
-        res: dict = client.get_stateful_node_import_status(import_id = stateful_import_id)
+        res: dict = client.get_stateful_node_import_status(import_id=stateful_import_id)
         state = res["items"][0]["state"]
         stateful_node_id = res["items"][0]["stateful_node_id"]
         message = f"Stateful node import started successfully, current state is: {state}"
@@ -1467,12 +1457,12 @@ def main():
         custom_data=dict(type="str"),
         data_disks=dict(type="list", elements="dict", options=data_disk_fields),
         extensions=dict(type="list", elements="dict", options=extension_fields),
-        image=dict(type="dict", options=image_fields, required=True),
+        image=dict(type="dict", options=image_fields),
         license_type=dict(type="str"),
         load_balancers_config=dict(type="dict", options=load_balancers_config_fields),
         login=dict(type="dict", options=login_fields),
         managed_service_identities=dict(type="list", elements="dict", options=managed_service_identity_fields),
-        network=dict(type="dict", options=network_fields, required=True),
+        network=dict(type="dict", options=network_fields),
         os_disk=dict(type="dict", options=os_disk_fields),
         proximity_placement_groups=dict(type="list", elements="dict", options=proximity_placement_groups_fields),
         secrets=dict(type="list", elements="dict", options=secret_fields),
@@ -1491,23 +1481,23 @@ def main():
     )
 
     compute_fields = dict(
-        launch_specification=dict(type="dict", options=launch_spec_fields, required=True),
-        os=dict(type="str", required=True),
+        launch_specification=dict(type="dict", options=launch_spec_fields),
+        os=dict(type="str"),
         preferred_zone=dict(type="str"),
-        vm_sizes=dict(type="dict", options=vm_sizes_fields, required=True),
+        vm_sizes=dict(type="dict", options=vm_sizes_fields),
         zones=dict(type="list", elements="str"),
     )
 
     actual_fields = dict(
-        name=dict(type="str", required=True),
-        region=dict(type="str", required=True),
-        resource_group_name=dict(type="str", required=True),
+        name=dict(type="str"),
+        region=dict(type="str"),
+        resource_group_name=dict(type="str"),
         description=dict(type="str"),
-        persistence=dict(type="dict", options=persistence_fields, required=True),
+        persistence=dict(type="dict", options=persistence_fields),
         health=dict(type="dict", options=health_fields),
         scheduling=dict(type="dict", options=scheduling_fields),
-        strategy=dict(type="dict", options=strategy_fields, required=True),
-        compute=dict(type="dict", options=compute_fields, required=True)
+        strategy=dict(type="dict", options=strategy_fields),
+        compute=dict(type="dict", options=compute_fields)
     )
 
     deallocate_config = dict(

@@ -16,6 +16,6 @@
             resource_retention_time: 2
             convert_unmanaged_disks: false
         stateful_node:
-
-     register: result
+        
+      register: result
     - debug: var=result
