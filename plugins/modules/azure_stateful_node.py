@@ -807,6 +807,8 @@ HAS_SPOTINST_SDK = False
 from ansible.module_utils.basic import env_fallback
 from ansible_collections.spot.cloud_modules.plugins.module_utils.spot_ansible_module import SpotAnsibleModule
 import copy
+import yaml
+import os
 
 try:
     import spotinst_sdk2 as spotinst
@@ -1201,6 +1203,19 @@ def handle_import_stateful_node(client, ssn_models, module):
         message = f"Couldn't retrieve status of stateful node being imported, error: {exc.message}"
         has_changed = False
         module.fail_json(msg=message)
+
+    # If VM import process is started, build the Ansible script that can be used to manage
+    # the stateful node after import.
+    try:
+        output_file_location = stateful_node_id + '.yaml'
+        with open(output_file_location, "w", encoding="utf-8") as yaml_file:
+            yaml.dump(import_ssn_config, yaml_file, default_flow_style=False)
+            yaml_file.close()
+    except FileNotFoundError:
+        message = "Stateful node imported successfully, but couldn't write the imported SSN config"
+        has_changed = True
+    finally:
+        yaml_file.close()
 
     return has_changed, stateful_node_id, message
 
