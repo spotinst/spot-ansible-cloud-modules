@@ -11,7 +11,7 @@ DOCUMENTATION = """
 ---
 module: azure_stateful_node
 version_added: 1.1.0
-short_description: Create, update or delete Spot Azure Stateful Nodes
+short_description: Create, update, Import or delete Spot Azure Stateful Nodes
 author: Spot by NetApp (@anuragsharma-123)
 description: >
     Create, update, delete, import or perform actions (pause, resume, recycle) on Spot Azure
@@ -93,6 +93,7 @@ options:
                                     should_deallocate:
                                         type: bool
                                         description: "Indicates whether to delete the stateful node's disk resources."
+                                        required: true
                                     ttl_in_hours:
                                         type: int
                                         description: "Hours to keep the resource alive before deletion. Default: 96"
@@ -103,6 +104,7 @@ options:
                                     should_deallocate:
                                         type: bool
                                         description: "Indicates whether to delete the stateful node's network resources."
+                                        required: true
                                     ttl_in_hours:
                                         type: int
                                         description: "Hours to keep the resource alive before deletion. Default: 96"
@@ -113,6 +115,7 @@ options:
                                     should_deallocate:
                                         type: bool
                                         description: "Indicates whether to delete the stateful node's public ip resources."
+                                        required: true
                                     ttl_in_hours:
                                         type: int
                                         description: "Hours to keep the resource alive before deletion. Default: 96"
@@ -124,12 +127,14 @@ options:
                                     should_deallocate:
                                         type: bool
                                         description: "Indicates whether to delete the stateful node's snapshot resources."
+                                        required: true
                                     ttl_in_hours:
                                         type: int
                                         description: "Hours to keep the resource alive before deletion. Default: 96"
                             should_terminate_vm:
                                 type: bool
                                 description: "Indicates whether to delete the stateful node's VM."
+                                required: true
             import_vm_config:
                 type: dict
                 description: "Configurations for importing a VM to a stateful node"
@@ -148,6 +153,9 @@ options:
                     resource_retention_time:
                         type: int
                         description: "Time in hours to delete the original resources after the import has finished"
+                    convert_unmanaged_disks:
+                        type: bool
+                        description: Converts virtual machine unmanaged disks to managed disks.
     stateful_node:
         type: dict
         description: "Describe the desired properties of the stateful node under this object."
@@ -155,15 +163,12 @@ options:
             name:
                 type: str
                 description: "The stateful node's name."
-                required: true
             region:
                 type: str
                 description: "The Azure region in which the Stateful Node will be launched."
-                required: true
             resource_group_name:
                 type: str
                 description: "The Azure resource group in which the VM and all of the subsequent subresources will be launched."
-                required: true
             description:
                 type: str
                 description: "optional description for the stateful node."
@@ -180,12 +185,15 @@ options:
                     should_persist_data_disks:
                         type: bool
                         description: "Enables the data disks persistency."
+                        required: true
                     should_persist_network:
                         type: bool
                         description: "Enables the network persistency."
+                        required: true
                     should_persist_os_disk:
                         type: bool
                         description: "Enables the OS disk persistency."
+                        required: true
             health:
                 type: dict
                 description: "Set health check and auto-healing of unhealthy VMs."
@@ -193,7 +201,7 @@ options:
                     health_check_types:
                         type: list
                         elements: str
-                        description: "Health check types to use in order to validate VM health."
+                        description: "Health check types to use in order to validate VM health. valid values: `vmState`, `applicationGateway`"
                     auto_healing:
                         type: bool
                         description: "Auto healing replaces the instance automatically in case the health check fails"
@@ -215,16 +223,22 @@ options:
                             type:
                                 type: str
                                 description: "The type of scheduled task. valid values: `pause`, `resume`, `recycle`"
+                                required: true
                             cron_expression:
                                 type: str
                                 description: "A valid cron expression that describes the scheduled task (UTC)."
+                                required: true
                             is_enabled:
                                 type: bool
                                 description: "Describes whether the task is enabled. When true the task should run when false it should not run."
+                                required: true
             strategy:
                 type: dict
                 description: "The strategy to launch the underlying VM and Spot behavior for the Stateful Node."
                 suboptions:
+                    availability_vs_cost:
+                        type: int
+                        description: Set the desired preference for the Spot market VM selection. (100 - Availability, 0 - cost).
                     draining_timeout:
                         type: int
                         description: "The time in seconds to allow the node be drained from incoming TCP connections and detached from LB before
@@ -232,6 +246,7 @@ options:
                     fallback_to_od:
                         type: bool
                         description: "In case of no spots available, stateful node will launch an On-demand instance instead"
+                        required: true
                     od_windows:
                         type: list
                         elements: str
@@ -252,6 +267,7 @@ options:
                             perform_at:
                                 type: str
                                 description: "Valid values: `always`, `never`, `timeWindow`. Default: `always`"
+                                required: true
                     signals:
                         type: list
                         elements: dict
@@ -260,9 +276,39 @@ options:
                             timeout:
                                 type: int
                                 description: "The timeout in seconds to hold the vm until a signal is sent. Default: 1800"
+                                required: true
                             type:
                                 type: str
                                 description: "The defined type of signal. Valid values: `vmReady`, `vmReadyToShutdown`"
+                                required: true
+                    capacity_reservation:
+                        type: dict
+                        description: Reserve Compute capacity in an Azure region or an Availability Zone for any duration of time.
+                        suboptions:
+                            capacity_reservation_groups:
+                                type: list
+                                elements: dict
+                                description: List of the desired CRGs to use under the associated Azure subscription.
+                                suboptions:
+                                    name:
+                                        type: str
+                                        description: "The name of the CRG."
+                                        required: true
+                                    resource_group_name:
+                                        type: str
+                                        description: "Azure resource group name."
+                                        required: true
+                                    should_prioritize:
+                                        type: bool
+                                        description: "The desired CRG to utilize ahead of other CRGs in the subscription."
+                            should_utilize:
+                                type: bool
+                                description: "Determines whether capacity reservations should be utilized."
+                                required: true
+                            utilization_strategy:
+                                type: str
+                                description: "The priority requested for using CRG. Valid values: `utilizeOverSpot`, `utilizeOverOD`"
+                                required: true
             compute:
                 type: dict
                 description: "Defines the computational parameters to use when launch the VM for the Stateful Node."
@@ -280,15 +326,18 @@ options:
                     vm_sizes:
                         type: dict
                         description: "Defines the VM sizes to use when launching VMs."
+                        required: true
                         suboptions:
                             od_sizes:
                                 type: list
                                 elements: str
                                 description: "Defines the on-demand sizes to use when launching VMs."
+                                required: true
                             spot_sizes:
                                 type: list
                                 elements: str
                                 description: "Defines the spot-VM sizes to use when launching VMs."
+                                required: true
                             preferred_spot_sizes:
                                 type: list
                                 elements: str
@@ -304,12 +353,14 @@ options:
                                     is_enabled:
                                         type: bool
                                         description: "Allows you to enable and disable the configuration of boot diagnostics at launch"
+                                        required: true
                                     storage_uri:
                                         type: str
                                         description: "The storage URI that is used if a type is unmanaged."
                                     type:
                                         type: str
                                         description: "Defines the storage type on VM launch in Azure. Valid Values: `managed`, `unmanaged`"
+                                        required: true
                             custom_data:
                                 type: str
                                 description: "Defines the custom data (YAML encoded at Base64) that will be executed upon VM launch."
@@ -321,12 +372,15 @@ options:
                                     lun:
                                         type: int
                                         description: "The LUN of the data disk."
+                                        required: true
                                     size_g_b:
                                         type: int
                                         description: "The size of the data disk in GB, required if dataDisks is specified."
+                                        required: true
                                     type:
                                         type: str
                                         description: "Type of data disk. Valid Values: `Standard_LRS`, `Premium_LRS`, `StandardSSD_LRS`, `UltraSSD_LRS`"
+                                        required: true
                             extensions:
                                 type: list
                                 elements: dict
@@ -335,18 +389,23 @@ options:
                                     api_version:
                                         type: str
                                         description: "The API version of the extension. Required if extension specified."
+                                        required: true
                                     minor_version_auto_upgrade:
                                         type: bool
                                         description: "Required on compute.launchSpecification.extensions object"
+                                        required: true
                                     name:
                                         type: str
                                         description: "Required on compute.launchSpecification.extensions object"
+                                        required: true
                                     publisher:
                                         type: str
                                         description: "Required on compute.launchSpecification.extensions object"
+                                        required: true
                                     type:
                                         type: str
                                         description: "Required on compute.launchSpecification.extensions object"
+                                        required: true
                             image:
                                 type: dict
                                 description: "Defines the image with which the VM will be launched."
@@ -358,9 +417,11 @@ options:
                                             name:
                                                 type: str
                                                 description: "The name of the custom image."
+                                                required: true
                                             resource_group_name:
                                                 type: str
                                                 description: "The resource group name for custom image."
+                                                required: true
                                     gallery:
                                         type: dict
                                         description: "Gallery image definitions."
@@ -368,18 +429,22 @@ options:
                                             gallery_name:
                                                 type: str
                                                 description: "Name of the gallery."
+                                                required: true
                                             image_name:
                                                 type: str
                                                 description: "Name of the gallery image."
+                                                required: true
                                             resource_group_name:
                                                 type: str
                                                 description: "The resource group name for gallery image."
+                                                required: true
                                             spot_account_id:
                                                 type: str
                                                 description: "The Spot account ID that connected to the Azure subscription to which the gallery belongs."
                                             version_name:
                                                 type: str
                                                 description: "Image's version. Can be in the format x.x.x or 'latest'."
+                                                required: true
                                     marketplace:
                                         type: dict
                                         description: "Select an image from Azure's Marketplace image catalogue."
@@ -387,15 +452,19 @@ options:
                                             offer:
                                                 type: str
                                                 description: "Image offer."
+                                                required: true
                                             publisher:
                                                 type: str
                                                 description: "Image publisher."
+                                                required: true
                                             sku:
                                                 type: str
                                                 description: "Image Stock Keeping Unit, which is the specific version of the image."
+                                                required: true
                                             version:
                                                 type: str
                                                 description: "Image Version. Default: `latest`"
+                                                required: true
                             license_type:
                                 type: str
                                 description:
@@ -415,6 +484,7 @@ options:
                                                 type: list
                                                 elements: str
                                                 description: "Name of the Backend Pool to register the Stateful Node VMs to."
+                                                required: true
                                             load_balancer_sku:
                                                 type: str
                                                 description:
@@ -424,12 +494,15 @@ options:
                                             name:
                                                 type: str
                                                 description: "Name of the Application Gateway/Load Balancer"
+                                                required: true
                                             resource_group_name:
                                                 type: str
                                                 description: "The Resource Group name of the Load Balancer."
+                                                required: true
                                             type:
                                                 type: str
                                                 description: "The type of load balancer. Valid Values: `loadBalancer`, `applicationGateway`"
+                                                required: true
                             login:
                                 type: dict
                                 description: "Specify the authentication details to be used for launching VMs."
@@ -443,6 +516,7 @@ options:
                                     user_name:
                                         type: str
                                         description: "Defines the admin user name for launching VMs."
+                                        required: true
                             managed_service_identities:
                                 type: list
                                 elements: dict
@@ -451,9 +525,11 @@ options:
                                     resource_group_name:
                                         type: str
                                         description: "Defines the resource group of the managed service identities."
+                                        required: true
                                     name:
                                         type: str
                                         description: "Defines the name of the managed service identities."
+                                        required: true
                             network:
                                 type: dict
                                 description: "Defines the network profile with which the VM will be launched."
@@ -461,13 +537,16 @@ options:
                                     resource_group_name:
                                         type: str
                                         description: "Defines the resource group name of the virtual network with which the VM will be launched."
+                                        required: true
                                     virtual_network_name:
                                         type: str
                                         description: "Defines the name of the virtual network with which the VM will be launched."
+                                        required: true
                                     network_interfaces:
                                         type: list
                                         elements: dict
                                         description: "Defines the network interfaces with which the VM will be launched."
+                                        required: true
                                         suboptions:
                                             additional_ip_configurations:
                                                 type: list
@@ -477,9 +556,11 @@ options:
                                                     private_ip_address_version:
                                                         type: str
                                                         description: "Defines the version of the private IP address. Valid Values: `IPv4`, `IPv6`"
+                                                        required: true
                                                     name:
                                                         type: str
                                                         description: "The name of the additional Ip Configuration."
+                                                        required: true
                                             application_security_groups:
                                                 type: list
                                                 elements: dict
@@ -490,9 +571,11 @@ options:
                                                     resource_group_name:
                                                         type: str
                                                         description: "Specify the resource group of the Application Security Group."
+                                                        required: true
                                                     name:
                                                         type: str
                                                         description: "Specify the name of the Application Security Group."
+                                                        required: true
                                             assign_public_ip:
                                                 type: bool
                                                 description: "Defines if a Public IP should be assigned in this network interface."
@@ -502,6 +585,7 @@ options:
                                             is_primary:
                                                 type: bool
                                                 description: "Defines whether the network interface is primary or not."
+                                                required: true
                                             network_security_group:
                                                 type: dict
                                                 description: "Defines the network security group to which the network interface will be assigned."
@@ -509,9 +593,11 @@ options:
                                                     resource_group_name:
                                                         type: str
                                                         description: "Specify the resource group of the network security group."
+                                                        required: true
                                                     name:
                                                         type: str
                                                         description: "Specify the name of the network security group to use in this network interface."
+                                                        required: true
                                             private_ip_addresses:
                                                 type: list
                                                 elements: str
@@ -524,15 +610,18 @@ options:
                                                     resource_group_name:
                                                         type: str
                                                         description: "Specify the resource group of the public IP."
+                                                        required: true
                                                     name:
                                                         type: str
                                                         description: "Specify the name of the public IP to which the VMs will be assigned."
+                                                        required: true
                                             public_ip_sku:
                                                 type: str
                                                 description: "Defines the type of public IP to assign the VM. Valid Values: `Standard`, `Basic`"
                                             subnet_name:
                                                 type: str
                                                 description: "Defines the subnet to which the network interface will be connected."
+                                                required: true
                             os_disk:
                                 type: dict
                                 description: "Specify OS disk specification other than default."
@@ -543,6 +632,20 @@ options:
                                     type:
                                         type: str
                                         description: "Type of OS disk. Valid Values: `Standard_LRS`, `Premium_LRS`, `StandardSSD_LRS`"
+                                        required: true
+                            proximity_placement_groups:
+                                type: list
+                                elements: dict
+                                description: "Defines the proximity placement group in which the VM will be launched."
+                                suboptions:
+                                    name:
+                                        type: str
+                                        description: "The name of the proximity placement group."
+                                        required: true
+                                    resource_group_name:
+                                        type: str
+                                        description: "The resource group name of the proximity placement group."
+                                        required: true
                             secrets:
                                 type: list
                                 elements: dict
@@ -551,24 +654,43 @@ options:
                                     source_vault:
                                         type: dict
                                         description: "The key vault reference, contains the required certificates"
+                                        required: true
                                         suboptions:
                                             name:
                                                 type: str
                                                 description: "The name of the key vault"
+                                                required: true
                                             resource_group_name:
                                                 type: str
                                                 description: "The resource group name of the key vault"
+                                                required: true
                                     vault_certificates:
                                         type: list
                                         elements: dict
                                         description: "The required certificate references"
+                                        required: true
                                         suboptions:
                                             certificate_store:
                                                 type: str
                                                 description: "The certificate store directory the VM."
+                                                required: true
                                             certificate_url:
                                                 type: str
                                                 description: "The URL of the certificate under the key vault"
+                                                required: true
+                            security:
+                                type: dict
+                                description: "Specifies the Security related profile settings for the virtual machine."
+                                suboptions:
+                                    secure_boot_enabled:
+                                        type: bool
+                                        description: "Specifies whether secure boot should be enabled on the virtual machine."
+                                    security_type:
+                                        type: str
+                                        description: "Refers to the different security features of a VM. Valid values: `Standard`, `TrustedLaunch`."
+                                    v_tpm_enabled:
+                                        type: bool
+                                        description: "Specifies whether vTPM should be enabled on the virtual machine."
                             shutdown_script:
                                 type: str
                                 description: "Defines the shutdown script (encoded at Base64) to execute once the VM is detached."
@@ -583,6 +705,9 @@ options:
                                     tag_value:
                                         type: str
                                         description: "Tag value for all resources."
+                            user_data:
+                                type: str
+                                description: "Set of scripts or other metadata that's inserted to an Azure VM at provision time. (Base64 encoded)"
                             vm_name:
                                 type: str
                                 description: "Set a VM name that will be persisted throughout the entire node lifecycle."
@@ -703,6 +828,7 @@ CLS_NAME_BY_ATTR_NAME = {
     "stateful_node.compute.launch_specification.secrets": "Secret",
     "stateful_node.compute.launch_specification.tags": "Tag",
     "stateful_node.strategy.signals": "Signal",
+    "stateful_node.strategy.capacity_reservation.capacity_reservation_groups": "CapacityReservationGroups",
     "stateful_node.scheduling.tasks": "SchedulingTask",
     "stateful_node_config.import_vm_config": "ImportVmConfiguration"
 }
@@ -711,6 +837,7 @@ LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
     "stateful_node.compute.launch_specification.load_balancers_config.load_balancers": "LoadBalancer",
     "stateful_node.compute.launch_specification.network.network_interfaces.application_security_groups": "ApplicationSecurityGroup",
     "stateful_node.compute.launch_specification.network.network_interfaces.additional_ip_configurations": "AdditionalIpConfiguration",
+    "stateful_node.compute.launch_specification.network.network_interfaces.public_ips": "PublicIp",
     "stateful_node.compute.launch_specification.secrets.vault_certificates": "VaultCertificate"
 }
 
@@ -1016,7 +1143,7 @@ def handle_import_stateful_node(client, ssn_models, module):
     try:
         if import_vm_config is not None:
             res: dict = client.get_stateful_node_from_azure_vm(resource_group_name=import_vm_config["resource_group_name"],
-                                                            virtual_machine_name=import_vm_config["original_vm_name"])
+                                                               virtual_machine_name=import_vm_config["original_vm_name"])
             import_ssn_config = res
             has_changed = True
             message = "VM configuration read successfully."
@@ -1041,11 +1168,17 @@ def handle_import_stateful_node(client, ssn_models, module):
         else:
             resource_retention_time = None
 
+        if "convert_unmanaged_disks" in import_vm_config:
+            convert_unmanaged_disks = import_vm_config["convert_unmanaged_disks"]
+        else:
+            convert_unmanaged_disks = None
+
         import_vm_config_obj = ssn_models.ImportVmConfiguration(draining_timeout=draining_timeout,
                                                                 node=import_ssn_config,
                                                                 original_vm_name=import_vm_config["original_vm_name"],
                                                                 resource_group_name=import_vm_config["resource_group_name"],
-                                                                resource_retention_time=resource_retention_time)
+                                                                resource_retention_time=resource_retention_time,
+                                                                convert_unmanaged_disks=convert_unmanaged_disks)
 
         res: dict = client.import_vm_to_stateful_node(import_vm_configuration=import_vm_config_obj)
         stateful_import_id = res.get("stateful_import_id")
@@ -1058,7 +1191,7 @@ def handle_import_stateful_node(client, ssn_models, module):
         module.fail_json(msg=message)
 
     try:
-        res: dict = client.get_stateful_node_import_status(import_id = stateful_import_id)
+        res: dict = client.get_stateful_node_import_status(import_id=stateful_import_id)
         state = res["items"][0]["state"]
         stateful_node_id = res["items"][0]["stateful_node_id"]
         message = f"Stateful node import started successfully, current state is: {state}"
@@ -1130,9 +1263,9 @@ def main():
     persistence_fields = dict(
         data_disks_persistence_mode=dict(type="str"),
         os_disk_persistence_mode=dict(type="str"),
-        should_persist_data_disks=dict(type="bool"),
-        should_persist_network=dict(type="bool"),
-        should_persist_os_disk=dict(type="bool"),
+        should_persist_data_disks=dict(type="bool", required=True),
+        should_persist_network=dict(type="bool", required=True),
+        should_persist_os_disk=dict(type="bool", required=True),
     )
 
     health_fields = dict(
@@ -1143,71 +1276,84 @@ def main():
     )
 
     task_fields = dict(
-        type=dict(type="str"),
-        cron_expression=dict(type="str"),
-        is_enabled=dict(type="bool"),
+        type=dict(type="str", required=True),
+        cron_expression=dict(type="str", required=True),
+        is_enabled=dict(type="bool", required=True),
     )
 
     scheduling_fields = dict(
         tasks=dict(type="list", elements="dict", options=task_fields)
     )
 
-    revert_to_spot_fields = dict(perform_at=dict(type="str"))
+    revert_to_spot_fields = dict(perform_at=dict(type="str", required=True))
 
     signal_fields = dict(
-        type=dict(type="str"),
-        timeout=dict(type="int"),
+        type=dict(type="str", required=True),
+        timeout=dict(type="int", required=True),
+    )
+
+    capacity_reservation_groups_fields = dict(
+        name=dict(type="str", required=True),
+        resource_group_name=dict(type="str", required=True),
+        should_prioritize=dict(type="bool"),
+    )
+
+    capacity_reservation_fields = dict(
+        capacity_reservation_groups=dict(type="list", elements="dict", options=capacity_reservation_groups_fields),
+        should_utilize=dict(type="bool", required=True),
+        utilization_strategy=dict(type="str", required=True),
     )
 
     strategy_fields = dict(
+        availability_vs_cost=dict(type="int"),
         draining_timeout=dict(type="int"),
-        fallback_to_od=dict(type="bool"),
+        fallback_to_od=dict(type="bool", required=True),
         od_windows=dict(type="list", elements="str"),
         optimization_windows=dict(type="list", elements="str"),
         preferred_lifecycle=dict(type="str"),
         revert_to_spot=dict(type="dict", options=revert_to_spot_fields),
         signals=dict(type="list", elements="dict", options=signal_fields),
-
+        capacity_reservation=dict(type="dict", options=capacity_reservation_fields)
     )
 
     boot_diagnostics_fields = dict(
-        is_enabled=dict(type="bool"),
+        is_enabled=dict(type="bool", required=True),
         storage_uri=dict(type="str"),
-        type=dict(type="str"),
+        type=dict(type="str", required=True),
     )
 
     data_disk_fields = dict(
-        lun=dict(type="int"),
-        size_g_b=dict(type="int"),
-        type=dict(type="str"),
+        lun=dict(type="int", required=True),
+        size_g_b=dict(type="int", required=True),
+        type=dict(type="str", required=True),
     )
 
     extension_fields = dict(
-        api_version=dict(type="str"),
-        minor_version_auto_upgrade=dict(type="bool"),
-        name=dict(type="str"),
-        publisher=dict(type="str"),
-        type=dict(type="str"),
+        api_version=dict(type="str", required=True),
+        minor_version_auto_upgrade=dict(type="bool", required=True),
+        name=dict(type="str", required=True),
+        publisher=dict(type="str", required=True),
+        type=dict(type="str", required=True),
     )
 
     marketplace_image_fields = dict(
-        publisher=dict(type="str"),
-        offer=dict(type="str"),
-        sku=dict(type="str"),
-        version=dict(type="str"),
+        publisher=dict(type="str", required=True),
+        offer=dict(type="str", required=True),
+        sku=dict(type="str", required=True),
+        version=dict(type="str", required=True),
     )
 
     gallery_image_fields = dict(
-        gallery_name=dict(type="str"),
-        image_name=dict(type="str"),
-        resource_group_name=dict(type="str"),
+        gallery_name=dict(type="str", required=True),
+        image_name=dict(type="str", required=True),
+        resource_group_name=dict(type="str", required=True),
         spot_account_id=dict(type="str"),
-        version_name=dict(type="str"),
+        version_name=dict(type="str", required=True),
     )
 
     custom_image_fields = dict(
-        resource_group_name=dict(type="str"),
-        name=dict(type="str"),
+        resource_group_name=dict(type="str", required=True),
+        name=dict(type="str", required=True),
     )
 
     image_fields = dict(
@@ -1217,11 +1363,11 @@ def main():
     )
 
     load_balancers_fields = dict(
-        backend_pool_names=dict(type="list", elements="str"),
+        backend_pool_names=dict(type="list", elements="str", required=True),
         load_balancer_sku=dict(type="str"),
-        name=dict(type="str"),
-        resource_group_name=dict(type="str"),
-        type=dict(type="str"),
+        name=dict(type="str", required=True),
+        resource_group_name=dict(type="str", required=True),
+        type=dict(type="str", required=True),
     )
 
     load_balancers_config_fields = dict(
@@ -1230,28 +1376,28 @@ def main():
 
     login_fields = dict(
         ssh_public_key=dict(type="str"),
-        user_name=dict(type="str"),
+        user_name=dict(type="str", required=True),
         password=dict(type="str"),
     )
 
     managed_service_identity_fields = dict(
-        resource_group_name=dict(type="str"),
-        name=dict(type="str"),
+        resource_group_name=dict(type="str", required=True),
+        name=dict(type="str", required=True),
     )
 
     additional_ip_configuration_fields = dict(
-        name=dict(type="str"),
-        private_ip_address_version=dict(type="str"),
+        name=dict(type="str", required=True),
+        private_ip_address_version=dict(type="str", required=True),
     )
 
     security_group_fields = dict(
-        name=dict(type="str"),
-        resource_group_name=dict(type="str"),
+        name=dict(type="str", required=True),
+        resource_group_name=dict(type="str", required=True),
     )
 
     public_ip_fields = dict(
-        name=dict(type="str"),
-        resource_group_name=dict(type="str"),
+        name=dict(type="str", required=True),
+        resource_group_name=dict(type="str", required=True),
     )
 
     network_interface_fields = dict(
@@ -1259,38 +1405,49 @@ def main():
         application_security_groups=dict(type="list", elements="dict", options=security_group_fields),
         assign_public_ip=dict(type="bool"),
         enable_ip_forwarding=dict(type="bool"),
-        is_primary=dict(type="bool"),
+        is_primary=dict(type="bool", required=True),
         network_security_group=dict(type="dict", options=security_group_fields),
         private_ip_addresses=dict(type="list", elements="str"),
         public_ips=dict(type="list", elements="dict", options=public_ip_fields),
         public_ip_sku=dict(type="str"),
-        subnet_name=dict(type="str"),
+        subnet_name=dict(type="str", required=True),
     )
 
     network_fields = dict(
-        network_interfaces=dict(type="list", elements="dict", options=network_interface_fields),
-        virtual_network_name=dict(type="str"),
-        resource_group_name=dict(type="str"),
+        network_interfaces=dict(type="list", elements="dict", options=network_interface_fields, required=True),
+        virtual_network_name=dict(type="str", required=True),
+        resource_group_name=dict(type="str", required=True),
     )
 
     os_disk_fields = dict(
         size_g_b=dict(type="int"),
-        type=dict(type="str"),
+        type=dict(type="str", required=True),
+    )
+
+    proximity_placement_groups_fields = dict(
+        name=dict(type="str", required=True),
+        resource_group_name=dict(type="str", required=True),
     )
 
     source_vault_fields = dict(
-        name=dict(type="str"),
-        resource_group_name=dict(type="str"),
+        name=dict(type="str", required=True),
+        resource_group_name=dict(type="str", required=True),
     )
 
     vault_certificate_fields = dict(
-        certificate_store=dict(type="str"),
-        certificate_url=dict(type="str"),
+        certificate_store=dict(type="str", required=True),
+        certificate_url=dict(type="str", required=True),
     )
 
     secret_fields = dict(
-        source_vault=dict(type="dict", options=source_vault_fields),
-        vault_certificates=dict(type="list", elements="dict", options=vault_certificate_fields),
+        source_vault=dict(type="dict", options=source_vault_fields, required=True),
+        vault_certificates=dict(type="list", elements="dict", options=vault_certificate_fields, required=True),
+    )
+
+    security_fields = dict(
+        secure_boot_enabled=dict(type="bool"),
+        security_type=dict(type="str"),
+        v_tpm_enabled=dict(type="bool"),
     )
 
     tags_fields = dict(tag_key=dict(type="str"), tag_value=dict(type="str"))
@@ -1307,17 +1464,20 @@ def main():
         managed_service_identities=dict(type="list", elements="dict", options=managed_service_identity_fields),
         network=dict(type="dict", options=network_fields),
         os_disk=dict(type="dict", options=os_disk_fields),
+        proximity_placement_groups=dict(type="list", elements="dict", options=proximity_placement_groups_fields),
         secrets=dict(type="list", elements="dict", options=secret_fields),
+        security=dict(type="dict", options=security_fields),
         shutdown_script=dict(type="str"),
         tags=dict(type="list", elements="dict", options=tags_fields),
+        user_data=dict(type="str"),
         vm_name=dict(type="str"),
         vm_name_prefix=dict(type="str"),
     )
 
     vm_sizes_fields = dict(
-        od_sizes=dict(type="list", elements="str"),
+        od_sizes=dict(type="list", elements="str", required=True),
         preferred_spot_sizes=dict(type="list", elements="str"),
-        spot_sizes=dict(type="list", elements="str"),
+        spot_sizes=dict(type="list", elements="str", required=True),
     )
 
     compute_fields = dict(
@@ -1329,9 +1489,9 @@ def main():
     )
 
     actual_fields = dict(
-        name=dict(type="str", required=True),
-        region=dict(type="str", required=True),
-        resource_group_name=dict(type="str", required=True),
+        name=dict(type="str"),
+        region=dict(type="str"),
+        resource_group_name=dict(type="str"),
         description=dict(type="str"),
         persistence=dict(type="dict", options=persistence_fields),
         health=dict(type="dict", options=health_fields),
@@ -1341,7 +1501,7 @@ def main():
     )
 
     deallocate_config = dict(
-        should_deallocate=dict(type="bool"),
+        should_deallocate=dict(type="bool", required=True),
         ttl_in_hours=dict(type="int"),
     )
 
@@ -1350,7 +1510,7 @@ def main():
         network_deallocation_config=dict(type="dict", options=deallocate_config),
         public_ip_deallocation_config=dict(type="dict", options=deallocate_config),
         snapshot_deallocation_config=dict(type="dict", options=deallocate_config),
-        should_terminate_vm=dict(type="bool"),
+        should_terminate_vm=dict(type="bool", required=True),
     )
 
     deletion_config_fields = dict(
@@ -1359,9 +1519,10 @@ def main():
 
     import_vm_config_fields = dict(
         draining_timeout=dict(type="int"),
-        original_vm_name=dict(type="str"),
-        resource_group_name=dict(type="str"),
+        original_vm_name=dict(type="str", required=True),
+        resource_group_name=dict(type="str", required=True),
         resource_retention_time=dict(type="int"),
+        convert_unmanaged_disks=dict(type="bool")
     )
 
     stateful_node_config_fields = dict(

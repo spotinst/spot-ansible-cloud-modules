@@ -72,3 +72,12 @@ Bugfixes
 --------
 
 - spot.cloud_modules.azure_stateful_node - When 'delete by name' operation is triggered for a non-existent node, return success, not exception.
+
+
+v1.3.2
+======
+
+Release Summary
+---------------
+
+Added new fields in azure_stateful_node module.

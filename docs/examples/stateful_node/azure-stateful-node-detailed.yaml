@@ -83,6 +83,7 @@
               os_disk:
                 size_g_b: 30
                 type: "Standard_LRS"
+              user_data: "VGhpcyBpcyBzaHV0ZG93biBzY3JpcHQ="
               shutdown_script: "VGhpcyBpcyBzaHV0ZG93biBzY3JpcHQ="
               tags:
                 - tag_key: "Creator"
