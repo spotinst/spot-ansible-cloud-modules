@@ -1209,8 +1209,30 @@ def handle_import_stateful_node(client, ssn_models, module):
     try:
         output_file_location = stateful_node_id + '.yaml'
         with open(output_file_location, "w", encoding="utf-8") as yaml_file:
-            yaml.dump(import_ssn_config, yaml_file, default_flow_style=False)
+
+            azure_stateful_node_dict = {}
+            azure_stateful_node_dict["state"] = "present"
+            azure_stateful_node_dict["uniqueness_by"] = "id"
+            azure_stateful_node_dict["id"] = stateful_node_id
+            azure_stateful_node_dict["do_not_update"] = [ "compute.os", "region", "resource_group_name" ]
+            azure_stateful_node_dict["stateful_node"] = import_ssn_config
+
+            task_dict = {}
+            task_dict["name"] = stateful_node_id
+            task_dict["spot.cloud_modules.azure_stateful_node"] = azure_stateful_node_dict
+            task_dict["register"] = "result"
+
+            task_list = [ task_dict, {"debug": "var=result"} ]
+
+            play_dict = {}
+            play_dict["hosts"] = "localhost"
+            play_dict["tasks"] = task_list
+
+            plays_list = [ play_dict ]
+
+            yaml.dump(plays_list, yaml_file, default_flow_style=False)
             yaml_file.close()
+            
     except FileNotFoundError:
         message = "Stateful node imported successfully, but couldn't write the imported SSN config"
         has_changed = True
