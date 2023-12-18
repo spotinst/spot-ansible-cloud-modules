@@ -15,7 +15,7 @@ Version 2 of Spot's Python SDK does not support Python 2.7 so this collection re
 
 ## Spot Python SDK compatibility
 
-Version `1.2.0` of this collection requires at least version `2.1.30` of Spot's Python SDK.
+Version `1.3.3` of this collection requires at least version `2.3.1` of Spot's Python SDK.
 
 ## Included content
 
@@ -53,7 +53,7 @@ be manually installed using pip and from the collection project's root, running:
     pip install requirements.txt
 or:
 
-    pip install spotinst_sdk2>=2.3.0
+    pip install spotinst_sdk2>=2.3.1
 
 ## Using this collection
 

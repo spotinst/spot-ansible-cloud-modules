@@ -833,6 +833,7 @@ CLS_NAME_BY_ATTR_NAME = {
     "stateful_node_config.import_vm_config": "ImportVmConfiguration"
 }
 
+
 LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
     "stateful_node.compute.launch_specification.load_balancers_config.load_balancers": "LoadBalancer",
     "stateful_node.compute.launch_specification.network.network_interfaces.application_security_groups": "ApplicationSecurityGroup",
@@ -841,6 +842,11 @@ LIST_MEMBER_CLS_NAME_BY_ATTR_NAME = {
     "stateful_node.compute.launch_specification.secrets.vault_certificates": "VaultCertificate"
 }
 
+
+LIST_OBJECTS_CLS_NAME_BY_ATTR_NAME = [
+    "stateful_node.compute.launch_specification.extensions.public_settings",
+    "stateful_node.compute.launch_specification.extensions.protected_settings"
+]
 
 def to_snake_case(camel_str):
     import re
@@ -892,16 +898,33 @@ def get_client(module):
     else:
         session = spotinst.SpotinstSession(auth_token=token)
 
-    client = session.client("stateful_node_azure", log_level="debug")
+    client = session.client("stateful_node_azure")
 
     return client
+
+
+def serialize_json_object(obj):
+    if isinstance(obj, dict):
+        serialized_dict = {}
+        for key, value in obj.items():
+            serialized_dict[key] = serialize_json_object(value)
+        return serialized_dict
+    elif isinstance(obj, list):
+        serialized_list = []
+        for item in obj:
+            serialized_list.append(serialize_json_object(item))
+        return serialized_list
+    else:
+        return obj
 
 
 def turn_to_model(content, field_name: str, curr_path=None):
     if content is None:
         return None
+
     elif is_primitive(content):
         return content
+
     elif isinstance(content, list):
         new_l = []
 
@@ -916,6 +939,10 @@ def turn_to_model(content, field_name: str, curr_path=None):
             curr_path += "." + field_name
         else:
             curr_path = field_name
+
+        # To handle Dictionary where keys are not known in advance
+        if curr_path in LIST_OBJECTS_CLS_NAME_BY_ATTR_NAME:
+            return serialize_json_object(content)
 
         override = find_in_overrides(curr_path)
         key_to_use = override if override else to_pascal_case(field_name)
@@ -1334,6 +1361,8 @@ def main():
         name=dict(type="str", required=True),
         publisher=dict(type="str", required=True),
         type=dict(type="str", required=True),
+        public_settings=dict(type="str"),
+        protected_settings=dict(type="str"),
     )
 
     marketplace_image_fields = dict(

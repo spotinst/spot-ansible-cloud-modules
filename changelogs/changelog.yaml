@@ -1,5 +1,15 @@
 ancestor: null
 releases:
+  1.3.3:
+    changes:
+      release_summary: Added `public_settings` and `protected_settings` fields in the `extensions` object.
+    fragments:
+      - 1-3-3-summary.yml
+    modules:
+      - description: Create, update, delete or Import Spot Azure Stateful Nodes
+        name: azure_stateful_node
+        namespace: ''
+    release_date: '2023-12-18'
   1.3.2:
     changes:
       release_summary: Added new fields in azure_stateful_node module
