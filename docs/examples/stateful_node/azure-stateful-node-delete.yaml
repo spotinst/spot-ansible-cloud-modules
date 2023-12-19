@@ -8,6 +8,7 @@
         do_not_update:
           - region
           - resource_group_name
+          - compute.os
         stateful_node_config:
           deletion_config:
             deallocation_config:

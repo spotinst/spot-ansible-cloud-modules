@@ -81,3 +81,12 @@ Release Summary
 ---------------
 
 Added new fields in azure_stateful_node module.
+
+
+v1.3.3
+======
+
+Release Summary
+---------------
+
+- spot.cloud_modules.azure_stateful_node - Added `public_settings` and `protected_settings` fields in the `extensions` object.

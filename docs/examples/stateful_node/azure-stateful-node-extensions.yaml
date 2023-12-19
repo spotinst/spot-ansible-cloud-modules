@@ -1,0 +1,81 @@
+- hosts: localhost
+  tasks:
+    - name: stateful_node
+      spot.cloud_modules.azure_stateful_node:
+        state: present    # absent = delete, present = create/update
+        credentials_path: "./credentials.yaml"
+        uniqueness_by: "id"
+        do_not_update:
+          - compute.os
+          - region
+          - resource_group_name
+        stateful_node:
+          name: "ansible-stateful-node-example"
+          description: "a sample Stateful Node created via Ansible"
+          region: "eastus"
+          resource_group_name: "AutomationResourceGroup"
+          persistence:
+            data_disks_persistence_mode: "reattach"
+            os_disk_persistence_mode: "reattach"
+            should_persist_data_disks: false
+            should_persist_network: false
+            should_persist_os_disk: true
+          strategy:
+            availability_vs_cost: 75
+            draining_timeout: 120
+            fallback_to_od: false
+            preferred_lifecycle: "spot"
+            revert_to_spot:
+              perform_at: "always"
+          compute:
+            os: "Windows"
+            zones: ["1", "2"]
+            preferred_zone: "2"
+            vm_sizes: 
+              od_sizes: ["standard_ds1_v2"]
+              spot_sizes: ["standard_ds1_v2", "standard_ds2_v2"]
+              preferred_spot_sizes: ["standard_ds1_v2"]
+            launch_specification:
+              boot_diagnostics:
+                is_enabled: true
+                type: "managed"
+              image:
+                marketplace:
+                  publisher: "MicrosoftWindowsServer"
+                  version: "latest"
+                  sku: "2016-Datacenter"
+                  offer: "WindowsServer"
+              login:
+                user_name: "azureuser"
+                password: "<your-password>"
+              network:
+                resource_group_name: "AutomationResourceGroup"
+                virtual_network_name: "Automation-VirtualNetwork"
+                network_interfaces:
+                  - is_primary: true
+                    assign_public_ip: false
+                    public_ip_sku: "Standard"
+                    subnet_name: "Automation-PrivateSubnet"
+                    enable_ip_forwarding: true
+              os_disk:
+                size_g_b: 130
+                type: "Standard_LRS"
+              extensions:
+                - api_version: "1.10"
+                  minor_version_auto_upgrade: true
+                  name: "MyTestExtension"
+                  publisher: "Microsoft.Compute"
+                  type: "CustomScriptExtension"
+                  public_settings: 
+                    commandToExecute: "myExecutionCommand"
+                    storageAccountName: "myStorageAccountName"
+                    storageAccountKey: "myStorageAccountKey"
+                    fileUris: 
+                      - "https://testspotinstautomation.blob.core.windows.net/testcontainer/Azuretest.sh"
+              tags:
+                - tag_key: "Creator"
+                  tag_value: "Ansible Test"
+                - tag_key: "Name"
+                  tag_value: "Ansible Extensions Example"
+      register: result
+    - debug: var=result

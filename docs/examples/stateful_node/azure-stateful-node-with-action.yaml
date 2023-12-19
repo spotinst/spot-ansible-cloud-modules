@@ -8,6 +8,7 @@
         do_not_update:
           - region
           - resource_group_name
+          - compute.os
         action: "pause" # resume, recycle <------ if you would just like to perform an action, leave all other fields as is and include this line.
         stateful_node:
           name: "ansible-stateful-node-example-with-action"
